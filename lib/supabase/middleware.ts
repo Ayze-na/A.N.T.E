@@ -50,17 +50,17 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdminPath = pathname.startsWith("/admin");
 
-  if (isAdminPath && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/admin/login";
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
-  }
-
   if (pathname === "/admin/login" && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin";
     url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  if (isAdminPath && pathname !== "/admin/login" && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
+    url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
