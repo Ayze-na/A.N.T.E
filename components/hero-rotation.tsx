@@ -10,7 +10,7 @@ export function HeroRotation() {
           fill
           priority
           sizes="100vw"
-          className="object-contain"
+          className="object-cover"
         />
       </div>
     </section>
