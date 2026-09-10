@@ -16,6 +16,18 @@ export function AdminShell({ children, title }: { children: React.ReactNode; tit
 
   const signOut = async () => {
     document.cookie = "ante_admin_session=; Max-Age=0; path=/";
+    if (
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL !== "https://your-project.supabase.co"
+    ) {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        await createClient().auth.signOut();
+      } catch {
+        /* ignore */
+      }
+    }
     router.push("/admin/login");
     router.refresh();
   };

@@ -94,6 +94,9 @@ export async function placeOrder(input: PlaceOrderInput): Promise<{
   // ---- SUPABASE MODE
   const supabase = createClient();
   try {
+    const publicUrl = (bucket: string, path: string) =>
+      supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+
     let proofUrl: string | null = null;
     if (input.payment_proof_data) {
       const blob = await dataUrlToBlob(input.payment_proof_data);
@@ -105,7 +108,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<{
         .from("payment-proofs")
         .upload(path, blob, { contentType: blob.type || "image/png" });
       if (upErr) throw upErr;
-      proofUrl = `/payment-proofs/${path}`;
+      proofUrl = publicUrl("payment-proofs", path);
     }
 
     // Uploaded customization logos -> uploaded-logos bucket
@@ -122,7 +125,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<{
             .from("uploaded-logos")
             .upload(path, blob, { contentType: blob.type || "image/png" });
           if (upErr) throw upErr;
-          logoRef = `/uploaded-logos/${path}`;
+          logoRef = publicUrl("uploaded-logos", path);
         }
         return {
           ok: true as const,
@@ -137,29 +140,27 @@ export async function placeOrder(input: PlaceOrderInput): Promise<{
     const failed = resolvedItems.find((r) => !r.ok);
     if (failed) return { ok: false, error: failed.error };
 
-    const { data: order, error: orderErr } = await supabase
-      .from("orders")
-      .insert({
-        order_number: orderNumber,
-        customer_name: input.customer_name,
-        phone_1: input.phone_1,
-        phone_2: input.phone_2,
-        address: input.address,
-        city: input.city,
-        subtotal,
-        deposit_amount: deposit,
-        remaining_amount: remaining,
-        payment_method: input.payment_method,
-        payment_proof_url: proofUrl,
-        status: "pending",
-      })
-      .select("id")
-      .single();
+    const orderId = crypto.randomUUID();
+    const { error: orderErr } = await supabase.from("orders").insert({
+      id: orderId,
+      order_number: orderNumber,
+      customer_name: input.customer_name,
+      phone_1: input.phone_1,
+      phone_2: input.phone_2,
+      address: input.address,
+      city: input.city,
+      subtotal,
+      deposit_amount: deposit,
+      remaining_amount: remaining,
+      payment_method: input.payment_method,
+      payment_proof_url: proofUrl,
+      status: "pending",
+    });
     if (orderErr) throw orderErr;
 
     const { error: itemsErr } = await supabase.from("order_items").insert(
       resolvedItems.map((r) => ({
-        order_id: order.id,
+        order_id: orderId,
         product_id: r.item.productId,
         product_name: r.item.name,
         size: r.item.size,
