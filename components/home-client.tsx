@@ -13,8 +13,8 @@ const CATEGORIES: { value: ProductType | "all"; label: string }[] = [
   { value: "all", label: "الكل" },
   { value: "scrub-full", label: "كم طويل" },
   { value: "scrub-half", label: "كم قصير" },
-  { value: "coat-men", label: "أفرول رجالي" },
-  { value: "coat-women", label: "أفرول حريمي" },
+  { value: "coat-men", label: "بالطو رجالي" },
+  { value: "coat-women", label: "بالطو حريمي" },
 ];
 
 export function HomeClient() {

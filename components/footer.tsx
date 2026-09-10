@@ -11,7 +11,7 @@ export function Footer({ whatsapp }: { whatsapp?: string }) {
             <span className="text-lg font-black text-primary-800">A.N.T.E</span>
           </div>
           <p className="mt-3 text-sm leading-6 text-ink-500">
-            ملابس طبية باحترافية — اسكرابس وأفرولات قابلة للتخصيص بالشعار
+            ملابس طبية باحترافية — اسكرابس وبالطو قابلة للتخصيص بالشعار
             والاسم. جودة عالية وخامات مريحة.
           </p>
         </div>
@@ -48,10 +48,10 @@ export function Footer({ whatsapp }: { whatsapp?: string }) {
               <a href="/products?type=scrub-half" className="hover:text-primary-700">اسكراب كم قصير</a>
             </li>
             <li>
-              <a href="/products?type=coat-men" className="hover:text-primary-700">أفرول رجالي</a>
+              <a href="/products?type=coat-men" className="hover:text-primary-700">بالطو رجالي</a>
             </li>
             <li>
-              <a href="/products?type=coat-women" className="hover:text-primary-700">أفرول حريمي</a>
+              <a href="/products?type=coat-women" className="hover:text-primary-700">بالطو حريمي</a>
             </li>
           </ul>
         </div>

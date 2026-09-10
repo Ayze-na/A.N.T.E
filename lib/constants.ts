@@ -12,12 +12,12 @@ export const PRODUCT_TYPES: Record<ProductType, { label: string; fabric: string;
     colors: ["أسود", "أزرق", "بترولي", "جنزاري", "مارون", "أزرق بيبي"],
   },
   "coat-men": {
-    label: "أفرول طبي — رجالي",
+    label: "بالطو طبي — رجالي",
     fabric: "جبردين",
     colors: ["أبيض"],
   },
   "coat-women": {
-    label: "أفرول طبي — حريمي",
+    label: "بالطو طبي — حريمي",
     fabric: "جبردين",
     colors: ["أبيض"],
   },

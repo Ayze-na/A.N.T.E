@@ -46,11 +46,11 @@ export const SEED_PRODUCTS = [
   },
   {
     id: "seed-coat-men",
-    name: "أفرول طبي رجالي — أبيض",
+    name: "بالطو طبي رجالي — أبيض",
     slug: "coat-men-white",
     type: "coat-men" as const,
     fabric: "جبردين",
-    description: "أفرول طبي رجالي أنيق من قماش الجبردين الفاخر.",
+    description: "بالطو طبي رجالي أنيق من قماش الجبردين الفاخر.",
     colors: ["أبيض"],
     sizes: ["M", "L", "XL", "XXL"],
     image_urls: [
@@ -66,11 +66,11 @@ export const SEED_PRODUCTS = [
   },
   {
     id: "seed-coat-women",
-    name: "أفرول طبي حريمي — أبيض",
+    name: "بالطو طبي حريمي — أبيض",
     slug: "coat-women-white",
     type: "coat-women" as const,
     fabric: "جبردين",
-    description: "أفرول طبي حريمي بقصّة راقية ومريحة.",
+    description: "بالطو طبي حريمي بقصّة راقية ومريحة.",
     colors: ["أبيض"],
     sizes: ["M", "L", "XL", "XXL"],
     image_urls: [

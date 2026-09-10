@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: "%s | A.N.T.E",
   },
   description:
-    "أيادي نتوفر للطب — اسكرابس وأفرولات طبية جاهزة للتخصيص بالشعار والاسم. A.N.T.E medical clothing store.",
+    "أيادي نتوفر للطب — اسكرابس وبالطو طبي جاهزة للتخصيص بالشعار والاسم. A.N.T.E medical clothing store.",
 };
 
 export const viewport: Viewport = {

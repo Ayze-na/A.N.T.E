@@ -104,9 +104,9 @@ insert into public.products (name, slug, type, fabric, description, colors, size
 values
   ('اسكراب طويل كم — أزرق', 'scrub-full-blue', 'scrub-full', 'لين', 'اسكراب طبي قطن لين، خامة مريحة للاستخدام اليومي.', array['أزرق'], array['S','M','L','XL','XXL'], array['https://placehold.co/600x600/eff6ff/1e3a8a?text=Scrub'], 450, true),
   ('اسكراب قصير كم — أسود', 'scrub-half-black', 'scrub-half', 'لين', 'اسكراب طبي قصير الكم، لون أسود عصري.', array['أسود'], array['S','M','L','XL','XXL'], array['https://placehold.co/600x600/e2e8f0/0f172a?text=Scrub'], 420, true),
-  ('أفرول طبي رجالي — أبيض', 'coat-men-white', 'coat-men', 'جبردين', 'أفرول طبي رجالي قماش جبردين فاخر.', array['أبيض'], array['M','L','XL','XXL'], array['https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat'], 600, true),
-  ('أفرول طبي حريمي — أبيض', 'coat-women-white', 'coat-women', 'جبردين', 'أفرول طبي حريمي بقصّة أنيقة.', array['أبيض'], array['M','L','XL','XXL'], array['https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat'], 580, true);
+('بالطو طبي رجالي — أبيض', 'coat-men-white', 'coat-men', 'جبردين', 'بالطو طبي رجالي قماش جبردين فاخر.', array['أبيض'], array['M','L','XL','XXL'], array['https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat'], 600, true),
 
+  ('بالطو طبي حريمي — أبيض', 'coat-women-white', 'coat-women', 'جبردين', 'بالطو طبي حريمي بقصّة أنيقة.', array['أبيض'], array['M','L','XL','XXL'], array['https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat'], 580, true);
 insert into public.payment_methods (method, phone_number, account_holder) values
   ('instapay', '01000000000', 'A.N.T.E'),
   ('orange_cash', '01000000000', 'A.N.T.E');

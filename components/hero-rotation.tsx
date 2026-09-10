@@ -6,7 +6,7 @@ export function HeroRotation() {
       <div className="relative h-full w-full">
         <Image
           src="/images/hero-poster.jpg"
-          alt="أفرول طبي للسادة"
+          alt="بالطو طبي للسادة"
           fill
           priority
           sizes="100vw"
