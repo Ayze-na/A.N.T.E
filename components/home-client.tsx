@@ -1,18 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { HeroRotation } from "@/components/hero-rotation";
 import { ProductGrid } from "@/components/product-grid";
 import { fetchProducts, fetchSetting } from "@/lib/api";
-import type { Product } from "@/lib/database.types";
+import { cn } from "@/lib/utils";
+import type { Product, ProductType } from "@/lib/database.types";
+
+const CATEGORIES: { value: ProductType | "all"; label: string }[] = [
+  { value: "all", label: "الكل" },
+  { value: "scrub-full", label: "كم طويل" },
+  { value: "scrub-half", label: "كم قصير" },
+  { value: "coat-men", label: "أفرول رجالي" },
+  { value: "coat-women", label: "أفرول حريمي" },
+];
 
 export function HomeClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [whatsapp, setWhatsapp] = useState<string>();
   const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState<ProductType | "all">("all");
 
   useEffect(() => {
     (async () => {
@@ -26,6 +35,14 @@ export function HomeClient() {
     })();
   }, []);
 
+  const filtered = useMemo(
+    () =>
+      category === "all"
+        ? products
+        : products.filter((p) => p.type === category),
+    [products, category],
+  );
+
   return (
     <>
       <Header />
@@ -33,21 +50,23 @@ export function HomeClient() {
         <HeroRotation />
 
         <section id="products" className="mx-auto max-w-6xl px-4 py-16">
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-black text-ink-900 sm:text-3xl">
-                منتجاتنا
-              </h2>
-              <p className="mt-1 text-sm font-medium text-ink-500">
-                اسكرابس وأفرولات بجودة عالية، مع إمكانية تركيب الشعار والاسم
-              </p>
+          <div className="mb-8 flex justify-center">
+            <div className="flex flex-wrap justify-center gap-1.5 rounded-full border border-ink-200 bg-white p-1.5 shadow-sm">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() => setCategory(cat.value)}
+                  className={cn(
+                    "h-9 rounded-full px-4 text-sm font-bold transition",
+                    category === cat.value
+                      ? "bg-primary-700 text-white shadow"
+                      : "text-ink-600 hover:bg-primary-50 hover:text-primary-800",
+                  )}
+                >
+                  {cat.label}
+                </button>
+              ))}
             </div>
-            <Link
-              href="/products"
-              className="text-sm font-bold text-primary-700 hover:underline"
-            >
-              عرض الكل ←
-            </Link>
           </div>
 
           {loading ? (
@@ -60,7 +79,7 @@ export function HomeClient() {
               ))}
             </div>
           ) : (
-            <ProductGrid products={products} />
+            <ProductGrid products={filtered} />
           )}
 
           <div className="mt-10 rounded-2xl border border-primary-200 bg-primary-50 p-6 text-center sm:p-8">

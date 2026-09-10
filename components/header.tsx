@@ -8,8 +8,13 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-ink-100 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        <div className="w-24" aria-hidden />
+
+        <Link
+          href="/"
+          className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2"
+        >
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-700 text-sm font-black text-white">
             A
           </span>
@@ -17,18 +22,6 @@ export function Header() {
             A.N.T.E
           </span>
         </Link>
-
-        <nav className="hidden items-center gap-6 text-sm font-bold text-ink-600 md:flex">
-          <Link href="/products" className="hover:text-primary-700">
-            المنتجات
-          </Link>
-          <Link href="/products?type=scrub-full" className="hover:text-primary-700">
-            اسكراب كم طويل
-          </Link>
-          <Link href="/products?type=coat-men" className="hover:text-primary-700">
-            أفرولات طبية
-          </Link>
-        </nav>
 
         <Link
           href="/cart"
