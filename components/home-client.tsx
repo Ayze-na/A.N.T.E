@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { HeroRotation } from "@/components/hero-rotation";
+import { ShowcaseMarquee } from "@/components/showcase-marquee";
 import { ProductGrid } from "@/components/product-grid";
 import { fetchProducts, fetchSetting } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,8 @@ export function HomeClient() {
       <Header />
       <main className="flex-1">
         <HeroRotation />
+
+        {products.length > 0 && <ShowcaseMarquee products={products} />}
 
         <section id="products" className="mx-auto max-w-6xl px-4 py-16">
           <div className="mb-8 flex justify-center">
