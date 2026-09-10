@@ -350,7 +350,7 @@ function ProductFormModal({
       out_of_stock: form.out_of_stock,
       discount_active: form.discount_active,
       discount_percentage: Math.min(100, Math.max(0, form.discount_percentage)),
-      slug: slugify(name),
+      ...(product?.id ? {} : { slug: slugify(name) }),
     });
     setSaving(false);
     if (!res.ok) {

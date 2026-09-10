@@ -140,13 +140,12 @@ export async function saveProduct(
   }
 
   const supabase = createClient();
-  const { id: _id, ...rest } = product;
+  const { id: _id, slug: _slug, ...rest } = product;
   if (product.id) {
     const { error } = await supabase
       .from("products")
       .update({
         ...rest,
-        slug: product.slug || slugify(product.name || ""),
         updated_at: new Date().toISOString(),
       })
       .eq("id", product.id);
