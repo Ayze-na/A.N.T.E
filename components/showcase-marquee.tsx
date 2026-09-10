@@ -1,57 +1,46 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import type { Product } from "@/lib/database.types";
+
+const ORIENTATIONS = [
+  "aspect-square",
+  "aspect-[3/4]",
+  "aspect-[4/3]",
+  "aspect-[3/4]",
+  "aspect-square",
+  "aspect-[4/3]",
+];
 
 export function ShowcaseMarquee({ products }: { products: Product[] }) {
   if (products.length === 0) return null;
 
-  const sets = 4;
-  const items = Array.from({ length: sets }).flatMap(() => products);
+  const items = products.slice(0, 6);
 
   return (
-    <>
-      <style>{`
-        .showcase-track {
-          animation: showcase-slide 50s linear infinite;
-          will-change: transform;
-        }
-        .showcase-track:hover {
-          animation-play-state: paused;
-        }
-        @keyframes showcase-slide {
-          to { transform: translateX(-25%); }
-        }
-      `}</style>
-
-      <section className="py-10">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-[#F2F1F7] to-transparent sm:w-28" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-[#F2F1F7] to-transparent sm:w-28" />
-
-          <div className="showcase-track flex w-max gap-3 px-4">
-            {items.map((p, i) => (
-              <Link
-                key={`${p.slug}-${i}`}
-                href={`/products/${p.slug}`}
-                className="group w-56 shrink-0 overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div className="relative aspect-square overflow-hidden bg-[#F2F1F7]">
-                  <Image
-                    src={p.image_urls[0]}
-                    alt={p.name}
-                    width={600}
-                    height={600}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-                  />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
+    <section className="mx-auto max-w-6xl px-4 py-10">
+      <div className="columns-2 gap-4 md:columns-3">
+        {items.map((p, i) => (
+          <motion.div
+            key={p.slug}
+            className={`mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm ${ORIENTATIONS[i % ORIENTATIONS.length]}`}
+            initial={{ opacity: 0, y: 90 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.6, delay: i * 0.08, ease: "easeOut" }}
+          >
+            <Image
+              src={p.image_urls[0]}
+              alt={p.name}
+              width={600}
+              height={600}
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          </motion.div>
+        ))}
+      </div>
+    </section>
   );
 }
