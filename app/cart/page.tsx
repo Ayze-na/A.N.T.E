@@ -56,7 +56,7 @@ export default function CartPage() {
               {items.map((item) => (
                 <div
                   key={item.key}
-                  className="flex gap-4 rounded-2xl border border-ink-100 bg-white p-3 shadow-sm"
+                  className="flex gap-4 rounded-2xl border border-ink-100 bg-[#F2F1F7] p-3 shadow-sm"
                 >
                   <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-ink-50">
                     {item.image_url ? (

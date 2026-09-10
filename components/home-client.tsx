@@ -51,7 +51,7 @@ export function HomeClient() {
 
         <section id="products" className="mx-auto max-w-6xl px-4 py-16">
           <div className="mb-8 flex justify-center">
-            <div className="flex flex-wrap justify-center gap-1.5 rounded-full border border-ink-200 bg-white p-1.5 shadow-sm">
+            <div className="flex flex-wrap justify-center gap-1.5 rounded-full border border-ink-200 bg-[#F2F1F7] p-1.5 shadow-sm">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.value}

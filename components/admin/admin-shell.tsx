@@ -34,7 +34,7 @@ export function AdminShell({ children, title }: { children: React.ReactNode; tit
 
   return (
     <div className="flex min-h-screen flex-col bg-ink-50 md:flex-row">
-      <aside className="border-b border-ink-200 bg-white md:w-60 md:border-b-0 md:border-l">
+      <aside className="border-b border-ink-200 bg-[#F2F1F7] md:w-60 md:border-b-0 md:border-l">
         <div className="flex items-center justify-between gap-2 px-4 py-4 md:block">
           <Link href="/admin" className="flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-700 text-sm font-black text-white">

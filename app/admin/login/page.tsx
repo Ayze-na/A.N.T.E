@@ -52,7 +52,7 @@ function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-primary-50 to-white px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-ink-100 bg-white p-8 shadow-lg">
+      <div className="w-full max-w-sm rounded-2xl border border-ink-100 bg-[#F2F1F7] p-8 shadow-lg">
         <div className="mb-6 text-center">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-700 text-xl font-black text-white">
             A

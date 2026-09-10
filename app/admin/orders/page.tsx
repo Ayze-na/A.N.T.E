@@ -144,7 +144,7 @@ export default function AdminOrdersPage() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-ink-100 bg-[#F2F1F7] shadow-sm">
         {loading ? (
           <div className="space-y-3 p-4">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -233,7 +233,7 @@ export default function AdminOrdersPage() {
                 onChange={(e) =>
                   changeStatus(selected.id, e.target.value as OrderStatus)
                 }
-                className="h-10 rounded-xl border border-ink-300 bg-white px-3 text-sm font-bold"
+                className="h-10 rounded-xl border border-ink-300 bg-[#F2F1F7] px-3 text-sm font-bold"
               >
                 {ORDER_STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -295,7 +295,7 @@ export default function AdminOrdersPage() {
                 {selected.order_items.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-xl border border-ink-100 bg-white p-3 text-sm"
+                    className="rounded-xl border border-ink-100 bg-[#F2F1F7] p-3 text-sm"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-bold text-ink-800">{item.product_name}</p>
@@ -346,7 +346,7 @@ function FilterChip({
       className={`h-9 rounded-full px-3.5 text-xs font-bold transition ${
         active
           ? "bg-primary-700 text-white"
-          : "border border-ink-200 bg-white text-ink-600 hover:border-primary-300"
+          : "border border-ink-200 bg-[#F2F1F7] text-ink-600 hover:border-primary-300"
       }`}
     >
       {children}

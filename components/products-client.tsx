@@ -98,7 +98,7 @@ function FilterChip({
         "h-10 rounded-full px-4 text-sm font-bold transition",
         active
           ? "bg-primary-700 text-white shadow"
-          : "border border-ink-200 bg-white text-ink-600 hover:border-primary-300 hover:text-primary-700",
+          : "border border-ink-200 bg-[#F2F1F7] text-ink-600 hover:border-primary-300 hover:text-primary-700",
       )}
     >
       {children}

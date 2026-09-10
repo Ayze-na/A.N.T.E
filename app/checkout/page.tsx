@@ -102,7 +102,7 @@ export default function CheckoutPage() {
         </h1>
         <div className="grid gap-8 lg:grid-cols-[1fr,340px]">
           <form onSubmit={submit} className="space-y-4" noValidate>
-            <div className="rounded-2xl border border-ink-100 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-ink-100 bg-[#F2F1F7] p-5 shadow-sm">
               <h2 className="mb-4 font-black text-ink-800">معلومات التواصل</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">

@@ -89,7 +89,7 @@ export default function AdminProductsPage() {
             {products.map((p) => (
               <div
                 key={p.id}
-                className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink-100 bg-white p-3 shadow-sm"
+                className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink-100 bg-[#F2F1F7] p-3 shadow-sm"
               >
                 <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-ink-50">
                   {p.image_urls[0] ? (
@@ -210,7 +210,7 @@ function TabBtn({
       onClick={onClick}
       className={cn(
         "h-10 rounded-xl px-4 text-sm font-bold transition",
-        active ? "bg-primary-700 text-white" : "bg-white text-ink-600 border border-ink-200",
+        active ? "bg-primary-700 text-white" : "bg-[#F2F1F7] text-ink-600 border border-ink-200",
       )}
     >
       {children}
@@ -238,7 +238,7 @@ function Toggle({
           ? danger
             ? "border-red-200 bg-red-50 text-red-700"
             : "border-primary-200 bg-primary-50 text-primary-700"
-          : "border-ink-200 bg-white text-ink-400",
+          : "border-ink-200 bg-[#F2F1F7] text-ink-400",
       )}
     >
       <span
@@ -413,7 +413,7 @@ function ProductFormModal({
             <input
               type="number"
               dir="ltr"
-              className="h-11 w-full rounded-xl border border-ink-300 bg-white px-3.5 text-sm disabled:opacity-40"
+              className="h-11 w-full rounded-xl border border-ink-300 bg-[#F2F1F7] px-3.5 text-sm disabled:opacity-40"
               value={form.discount_active ? form.discount_percentage || "" : ""}
               disabled={!form.discount_active}
               onChange={(e) =>
@@ -445,7 +445,7 @@ function ProductFormModal({
                   "h-9 rounded-xl border px-3 text-xs font-bold transition",
                   form.colors.includes(c)
                     ? "border-primary-600 bg-primary-700 text-white"
-                    : "border-ink-200 bg-white text-ink-600",
+                    : "border-ink-200 bg-[#F2F1F7] text-ink-600",
                 )}
               >
                 {c}
@@ -465,7 +465,7 @@ function ProductFormModal({
                   "h-10 min-w-10 rounded-xl border px-2.5 text-sm font-black transition",
                   form.sizes.includes(s)
                     ? "border-primary-600 bg-primary-700 text-white"
-                    : "border-ink-200 bg-white text-ink-600",
+                    : "border-ink-200 bg-[#F2F1F7] text-ink-600",
                 )}
               >
                 {s}
@@ -500,7 +500,7 @@ function ProductFormModal({
               placeholder="أو ألصق رابط صورة https://..."
               value={imageInput}
               onChange={(e) => setImageInput(e.target.value)}
-              className="h-11 min-w-52 flex-1 rounded-xl border border-ink-300 bg-white px-3.5 text-sm"
+              className="h-11 min-w-52 flex-1 rounded-xl border border-ink-300 bg-[#F2F1F7] px-3.5 text-sm"
             />
             <Button
               variant="secondary"
@@ -665,7 +665,7 @@ function PresetLogosSection({
             <Button size="sm" onClick={addLogo} loading={busy}>
               إضافة
             </Button>
-            <label className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-white px-3 text-xs font-bold text-ink-600 border border-ink-200">
+            <label className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-[#F2F1F7] px-3 text-xs font-bold text-ink-600 border border-ink-200">
               رفع ملف
               <input
                 type="file"
@@ -692,7 +692,7 @@ function PresetLogosSection({
         {logos.map((logo) => (
           <div
             key={logo.id}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-ink-100 bg-white p-4 shadow-sm"
+            className="flex flex-col items-center gap-2 rounded-2xl border border-ink-100 bg-[#F2F1F7] p-4 shadow-sm"
           >
             <div className="relative h-20 w-20 overflow-hidden rounded-xl bg-ink-50">
               <Image
@@ -759,7 +759,7 @@ function SettingsSection({ onToast }: { onToast: ReturnType<typeof useToast>["to
   if (!loaded) return <div className="h-40 animate-pulse rounded-2xl bg-ink-100" />;
 
   return (
-    <div className="max-w-2xl space-y-4 rounded-2xl border border-ink-100 bg-white p-5 shadow-sm">
+    <div className="max-w-2xl space-y-4 rounded-2xl border border-ink-100 bg-[#F2F1F7] p-5 shadow-sm">
       <div>
         <h3 className="mb-3 font-black text-ink-800">رقم الواتساب</h3>
         <Input

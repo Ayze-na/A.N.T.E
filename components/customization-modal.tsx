@@ -107,9 +107,9 @@ export function CustomizationModal({
           <p className="mb-4 text-center text-sm font-bold text-ink-600">
             معاينة الجيب الأمامي
           </p>
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-[260px] overflow-hidden rounded-xl border border-ink-200 bg-white shadow-inner">
+          <div className="relative mx-auto aspect-[4/5] w-full max-w-[260px] overflow-hidden rounded-xl border border-ink-200 bg-[#F2F1F7] shadow-inner">
             {/* garment backdrop */}
-            <div className="absolute inset-0 bg-white" />
+            <div className="absolute inset-0 bg-[#F2F1F7]" />
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-primary-50" />
             {/* pocket */}
             <div className="absolute left-1/2 top-[58%] h-[34%] w-[62%] -translate-x-1/2 rounded-lg border-2 border-ink-200 bg-ink-50" />
@@ -213,7 +213,7 @@ export function CustomizationModal({
                     setUploadFile(null);
                   }}
                   className={cn(
-                    "flex flex-col items-center gap-2 rounded-xl border-2 bg-white p-2 transition",
+                    "flex flex-col items-center gap-2 rounded-xl border-2 bg-[#F2F1F7] p-2 transition",
                     selectedPreset?.id === preset.id
                       ? "border-primary-600 ring-2 ring-primary-200"
                       : "border-ink-200 hover:border-primary-300",
@@ -243,7 +243,7 @@ export function CustomizationModal({
             <input
               value={nameText}
               onChange={(e) => setNameText(e.target.value)}
-              className="h-12 w-full rounded-xl border border-ink-300 bg-white px-4 text-lg font-black text-black focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              className="h-12 w-full rounded-xl border border-ink-300 bg-[#F2F1F7] px-4 text-lg font-black text-black focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
               placeholder="د. أحمد محمد"
               maxLength={30}
             />

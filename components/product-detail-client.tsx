@@ -155,7 +155,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
                           "h-10 rounded-xl border px-4 text-sm font-bold transition",
                           color === c
                             ? "border-primary-600 bg-primary-700 text-white"
-                            : "border-ink-200 bg-white text-ink-700 hover:border-primary-300",
+                            : "border-ink-200 bg-[#F2F1F7] text-ink-700 hover:border-primary-300",
                         )}
                       >
                         {c}
@@ -180,7 +180,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
                           "h-11 min-w-12 rounded-xl border px-3 text-sm font-black transition",
                           size === s
                             ? "border-primary-600 bg-primary-700 text-white"
-                            : "border-ink-200 bg-white text-ink-700 hover:border-primary-300",
+                            : "border-ink-200 bg-[#F2F1F7] text-ink-700 hover:border-primary-300",
                         )}
                       >
                         {s}
@@ -227,7 +227,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
                       variant="outline"
                       size="sm"
                       onClick={() => setCustomizeOpen(true)}
-                      className="bg-white"
+                      className="bg-[#F2F1F7]"
                     >
                       {customization ? "تعديل التخصيص" : "تخصيص"}
                     </Button>

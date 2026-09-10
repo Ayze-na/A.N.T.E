@@ -144,7 +144,7 @@ export default function PaymentPage() {
               key={m.method}
               onClick={() => setSelected(m.method)}
               className={cn(
-                "flex w-full items-center gap-4 rounded-2xl border-2 bg-white p-4 text-right transition",
+                "flex w-full items-center gap-4 rounded-2xl border-2 bg-[#F2F1F7] p-4 text-right transition",
                 selected === m.method
                   ? "border-primary-600 ring-2 ring-primary-200"
                   : "border-ink-100 hover:border-primary-300",

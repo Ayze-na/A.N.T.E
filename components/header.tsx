@@ -7,7 +7,7 @@ export function Header() {
   const count = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
 
   return (
-    <header className="sticky top-0 z-40 border-b border-ink-100 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-ink-100 bg-[#F2F1F7]/90 backdrop-blur">
       <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <div className="w-24" aria-hidden />
 
@@ -34,7 +34,7 @@ export function Header() {
           </svg>
           السلة
           {count > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-black text-primary-700">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F2F1F7] px-1 text-xs font-black text-primary-700">
               {count}
             </span>
           )}

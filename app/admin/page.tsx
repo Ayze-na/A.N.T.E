@@ -102,7 +102,7 @@ export default function AdminDashboard() {
           {/* Cards */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {cards.map((c) => (
-              <div key={c.label} className="rounded-2xl border border-ink-100 bg-white p-4 shadow-sm">
+              <div key={c.label} className="rounded-2xl border border-ink-100 bg-[#F2F1F7] p-4 shadow-sm">
                 <p className="text-xs font-bold text-ink-400">{c.label}</p>
                 <p className={`mt-1 text-xl font-black sm:text-2xl ${c.accent}`}>{c.value}</p>
               </div>
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
 
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Chart */}
-            <div className="rounded-2xl border border-ink-100 bg-white p-5 shadow-sm lg:col-span-2">
+            <div className="rounded-2xl border border-ink-100 bg-[#F2F1F7] p-5 shadow-sm lg:col-span-2">
               <h3 className="mb-4 font-black text-ink-800">الإيرادات على مدار الوقت</h3>
               {stats.chartData.length === 0 ? (
                 <p className="py-12 text-center text-sm text-ink-400">
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
 
             {/* Best sellers + status */}
             <div className="space-y-6">
-              <div className="rounded-2xl border border-ink-100 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-ink-100 bg-[#F2F1F7] p-5 shadow-sm">
                 <h3 className="mb-3 font-black text-ink-800">الأكثر مبيعاً</h3>
                 {stats.top.length === 0 ? (
                   <p className="py-6 text-center text-sm text-ink-400">لا توجد بيانات</p>
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-ink-100 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-ink-100 bg-[#F2F1F7] p-5 shadow-sm">
                 <h3 className="mb-3 font-black text-ink-800">حالات الطلبات</h3>
                 <div className="flex flex-wrap gap-2">
                   {(Object.keys(ORDER_STATUS_LABELS) as (keyof typeof ORDER_STATUS_LABELS)[])
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent orders */}
-          <div className="rounded-2xl border border-ink-100 bg-white shadow-sm">
+          <div className="rounded-2xl border border-ink-100 bg-[#F2F1F7] shadow-sm">
             <div className="flex items-center justify-between px-5 py-4">
               <h3 className="font-black text-ink-800">أحدث الطلبات</h3>
               <Link href="/admin/orders" className="text-xs font-bold text-primary-700 hover:underline">

@@ -52,7 +52,7 @@ export function Modal({
     >
       <div
         className={cn(
-          "flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl",
+          "flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#F2F1F7] shadow-2xl sm:rounded-2xl",
           sizes[size],
         )}
       >

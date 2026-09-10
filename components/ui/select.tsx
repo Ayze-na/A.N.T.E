@@ -24,7 +24,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={cn(
-            "h-11 w-full rounded-xl border border-ink-300 bg-white px-3.5 text-sm",
+            "h-11 w-full rounded-xl border border-ink-300 bg-[#F2F1F7] px-3.5 text-sm",
             "focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500",
             "appearance-none bg-no-repeat",
             error && "border-red-400",
