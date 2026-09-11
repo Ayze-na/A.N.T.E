@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { fetchPresetLogos } from "@/lib/api";
+import { PRESET_LOGO_CATEGORIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type {
   CustomizationType,
@@ -204,7 +205,14 @@ export function CustomizationModal({
             {(() => {
               const categories = Array.from(
                 new Set(presets.map((p) => p.category).filter(Boolean)),
-              );
+              ).sort((a, b) => {
+                const ia = PRESET_LOGO_CATEGORIES.indexOf(a as never);
+                const ib = PRESET_LOGO_CATEGORIES.indexOf(b as never);
+                return (
+                  (ia === -1 ? PRESET_LOGO_CATEGORIES.length : ia) -
+                  (ib === -1 ? PRESET_LOGO_CATEGORIES.length : ib)
+                );
+              });
               const shown = presets.filter(
                 (p) => categoryFilter === "all" || p.category === categoryFilter,
               );

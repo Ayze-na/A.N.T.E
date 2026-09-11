@@ -15,7 +15,7 @@ import {
   fetchAdminProducts,
   saveProduct,
 } from "@/lib/admin";
-import { PRODUCT_TYPE_OPTIONS, SIZES } from "@/lib/constants";
+import { PRODUCT_TYPE_OPTIONS, SIZES, PRESET_LOGO_CATEGORIES, NEW_CATEGORY_VALUE } from "@/lib/constants";
 import { cn, formatPrice, slugify, discountRatio } from "@/lib/utils";
 import { hasSupabase } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/client";
@@ -580,9 +580,19 @@ function PresetLogosSection({
 }) {
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
-  const [category, setCategory] = useState("عام");
+  const [category, setCategory] = useState(PRESET_LOGO_CATEGORIES[0]);
+  const [isNewCategory, setIsNewCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const resolvedCategory = isNewCategory
+    ? newCategory.trim() || "بشري"
+    : category;
+
+  const existingCategories = Array.from(
+    new Set([...PRESET_LOGO_CATEGORIES, ...logos.map((l) => l.category)]),
+  ).filter(Boolean);
 
   const addLogo = async () => {
     if (!label.trim() || !imageUrl.trim()) {
@@ -612,7 +622,7 @@ function PresetLogosSection({
       id: `logo-${Date.now()}`,
       image_url: url,
       label: label.trim(),
-      category: category.trim() || "عام",
+      category: resolvedCategory,
       active: true,
       created_at: new Date().toISOString(),
     };
@@ -623,7 +633,7 @@ function PresetLogosSection({
         .insert({
           image_url: url,
           label: label.trim(),
-          category: category.trim() || "عام",
+          category: resolvedCategory,
           active: true,
         });
       if (error) {
@@ -660,9 +670,37 @@ function PresetLogosSection({
         <div className="mb-4 rounded-2xl border border-primary-200 bg-primary-50 p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <Input label="اسم الشعار" value={label} onChange={(e) => setLabel(e.target.value)} />
-            <Input label="الفئة" value={category} onChange={(e) => setCategory(e.target.value)} list="logo-categories" placeholder="مثال: شعارات طبية"
-              helper={`أو اختر من الموجودة: ${Array.from(new Set(logos.map((l) => l.category))).filter(Boolean).join("، ") || "لا توجد فئات بعد"}`}
-            />
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-ink-700">الفئة</label>
+              <select
+                value={isNewCategory ? NEW_CATEGORY_VALUE : category}
+                onChange={(e) => {
+                  if (e.target.value === NEW_CATEGORY_VALUE) {
+                    setIsNewCategory(true);
+                    setNewCategory("");
+                  } else {
+                    setIsNewCategory(false);
+                    setCategory(e.target.value);
+                  }
+                }}
+                className="h-11 w-full rounded-xl border border-ink-300 bg-[#F2F1F7] px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500"
+              >
+                {existingCategories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+                <option value={NEW_CATEGORY_VALUE}>+ فئة أخرى جديدة</option>
+              </select>
+              {isNewCategory && (
+                <input
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="اكتب اسم الفئة الجديدة…"
+                  className="mt-2 h-11 w-full rounded-xl border border-ink-300 bg-[#F2F1F7] px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500"
+                />
+              )}
+            </div>
             <Input
               label="رابط الصورة"
               dir="ltr"
@@ -671,11 +709,6 @@ function PresetLogosSection({
               onChange={(e) => setImageUrl(e.target.value)}
             />
           </div>
-          <datalist id="logo-categories">
-            {Array.from(new Set(logos.map((l) => l.category))).filter(Boolean).map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
           <div className="mt-3 flex gap-2">
             <Button size="sm" onClick={addLogo} loading={busy}>
               إضافة

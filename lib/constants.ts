@@ -56,6 +56,18 @@ export const SIZES = [
   "X6L",
 ];
 
+export const PRESET_LOGO_CATEGORIES = [
+  "بشري",
+  "بيطري",
+  "اسنان",
+  "صيدلة",
+  "علاج طبيعي",
+  "تمريض",
+  "علوم",
+];
+
+export const NEW_CATEGORY_VALUE = "__new__";
+
 export const DEPOSIT_PERCENTAGE = 0.2;
 
 export const ORDER_STATUS_STYLES: Record<OrderStatus, string> = {
