@@ -8,6 +8,7 @@ const NAV = [
   { href: "/admin", label: "لوحة التحكم", icon: "M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z" },
   { href: "/admin/orders", label: "الطلبات", icon: "M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4z" },
   { href: "/admin/products", label: "المنتجات", icon: "M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" },
+  { href: "/admin/gallery", label: "معرض الصور", icon: "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm6.5 3.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM6 17l3.5-4.5 3 3.5L16 12l4.5 5.5z" },
 ];
 
 export function AdminShell({ children, title }: { children: React.ReactNode; title: string }) {

@@ -2,37 +2,43 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import type { Product } from "@/lib/database.types";
+import type { GalleryOrientation } from "@/lib/database.types";
 
-const ORIENTATIONS = [
-  "aspect-square",
-  "aspect-[3/4]",
-  "aspect-[4/3]",
-  "aspect-[3/4]",
-  "aspect-square",
-  "aspect-[4/3]",
-];
+const ORIENTATION_CLASS: Record<GalleryOrientation, string> = {
+  square: "aspect-square",
+  portrait: "aspect-[3/4]",
+  landscape: "aspect-[4/3]",
+};
 
-export function ShowcaseMarquee({ products }: { products: Product[] }) {
-  if (products.length === 0) return null;
+export type ShowcaseItem = {
+  key: string;
+  image_url: string;
+  alt: string;
+  orientation: GalleryOrientation;
+};
 
-  const items = Array.from({ length: 6 }, (_, i) => products[i % products.length]);
+export function ShowcaseMarquee({ gallery }: { gallery: ShowcaseItem[] }) {
+  if (gallery.length === 0) return null;
+
+  const items = gallery.slice(0, 6);
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">
       <div className="columns-2 gap-4 md:columns-3">
-        {items.map((p, i) => (
+        {items.map((item, i) => (
           <motion.div
-            key={`${p.slug}-${i}`}
-            className={`mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm ${ORIENTATIONS[i % ORIENTATIONS.length]}`}
+            key={item.key}
+            className={`mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm ${
+              ORIENTATION_CLASS[item.orientation]
+            }`}
             initial={{ opacity: 0, y: 90 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.2 }}
             transition={{ duration: 0.6, delay: i * 0.08, ease: "easeOut" }}
           >
             <Image
-              src={p.image_urls[0]}
-              alt={p.name}
+              src={item.image_url}
+              alt={item.alt}
               width={600}
               height={600}
               loading="lazy"

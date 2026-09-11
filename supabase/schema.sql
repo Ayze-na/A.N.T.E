@@ -99,6 +99,17 @@ create table if not exists public.settings (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.gallery_images (
+  id uuid primary key default gen_random_uuid(),
+  image_url text not null,
+  alt text not null default '',
+  orientation text not null default 'square' check (orientation in ('square', 'portrait', 'landscape')),
+  active boolean not null default true,
+  position int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- ---------- Defaults ----------
 insert into public.products (name, slug, type, fabric, description, colors, sizes, image_urls, price, customization_enabled)
 values
@@ -110,6 +121,14 @@ values
 insert into public.payment_methods (method, phone_number, account_holder) values
   ('instapay', '01000000000', 'A.N.T.E'),
   ('orange_cash', '01000000000', 'A.N.T.E');
+insert into public.gallery_images (image_url, alt, orientation, position)
+values
+  ('https://placehold.co/600x600/eff6ff/1e3a8a?text=Scrub', 'اسكراب طويل كم أزرق', 'portrait', 0),
+  ('https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat+Men', 'بالطو طبي رجالي', 'square', 1),
+  ('https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat+Women', 'بالطو طبي حريمي', 'portrait', 2),
+  ('https://placehold.co/600x600/e2e8f0/0f172a?text=Scrub+Half', 'اسكراب قصير كم', 'square', 3),
+  ('https://placehold.co/600x600/eff6ff/1e3a8a?text=Detail', 'تفاصيل خامات', 'landscape', 4),
+  ('https://placehold.co/600x600/f8fafc/1e3a8a?text=Fitting', 'مقاسات متنوعة', 'landscape', 5);
 
 -- ---------- Row Level Security ----------
 alter table public.products enable row level security;
@@ -151,15 +170,23 @@ create policy "settings_read_all" on public.settings for select using (true);
 create policy "settings_admin_insert" on public.settings for insert with check (auth.role() = 'authenticated');
 create policy "settings_admin_update" on public.settings for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
+-- Gallery: everyone reads the homepage showcase, admin manages it.
+create policy "gallery_read_all" on public.gallery_images for select using (true);
+create policy "gallery_admin_insert" on public.gallery_images for insert with check (auth.role() = 'authenticated');
+create policy "gallery_admin_update" on public.gallery_images for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "gallery_admin_delete" on public.gallery_images for delete using (auth.role() = 'authenticated');
+
 -- ---------- Storage buckets ----------
 insert into storage.buckets (id, name, public) values
   ('product-images', 'product-images', true),
   ('preset-logos', 'preset-logos', true),
   ('uploaded-logos', 'uploaded-logos', true),
-  ('payment-proofs', 'payment-proofs', true)
+  ('payment-proofs', 'payment-proofs', true),
+  ('gallery-images', 'gallery-images', true)
 on conflict (id) do update set public = excluded.public;
 
 -- Public read on all buckets (proofs/logos are referenced by plain URLs)
+create policy "gallery_images_public_read" on storage.objects for select using (bucket_id = 'gallery-images');
 create policy "product_images_public_read" on storage.objects for select using (bucket_id = 'product-images');
 create policy "preset_logos_public_read" on storage.objects for select using (bucket_id = 'preset-logos');
 create policy "uploaded_logos_public_read" on storage.objects for select using (bucket_id = 'uploaded-logos');
@@ -172,6 +199,11 @@ create policy "product_images_admin_delete" on storage.objects for delete using 
 create policy "preset_logos_admin_upload" on storage.objects for insert with check (bucket_id = 'preset-logos' and auth.role() = 'authenticated');
 create policy "preset_logos_admin_update" on storage.objects for update using (bucket_id = 'preset-logos' and auth.role() = 'authenticated') with check (bucket_id = 'preset-logos');
 create policy "preset_logos_admin_delete" on storage.objects for delete using (bucket_id = 'preset-logos' and auth.role() = 'authenticated');
+
+-- Authenticated admin manages gallery-images
+create policy "gallery_images_admin_upload" on storage.objects for insert with check (bucket_id = 'gallery-images' and auth.role() = 'authenticated');
+create policy "gallery_images_admin_update" on storage.objects for update using (bucket_id = 'gallery-images' and auth.role() = 'authenticated') with check (bucket_id = 'gallery-images');
+create policy "gallery_images_admin_delete" on storage.objects for delete using (bucket_id = 'gallery-images' and auth.role() = 'authenticated');
 
 -- Anyone can upload a logo (guest customization) into uploaded-logos
 create policy "uploaded_logos_public_insert" on storage.objects for insert with check (bucket_id = 'uploaded-logos');

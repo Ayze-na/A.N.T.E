@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { HeroRotation } from "@/components/hero-rotation";
-import { ShowcaseMarquee } from "@/components/showcase-marquee";
+import { ShowcaseMarquee, type ShowcaseItem } from "@/components/showcase-marquee";
 import { ProductGrid } from "@/components/product-grid";
-import { fetchProducts, fetchSetting } from "@/lib/api";
+import { fetchProducts, fetchSetting, fetchGalleryImages } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import type { Product, ProductType } from "@/lib/database.types";
+import type { Product, ProductType, GalleryOrientation } from "@/lib/database.types";
 
 const CATEGORIES: { value: ProductType | "all"; label: string }[] = [
   { value: "all", label: "الكل" },
@@ -21,20 +21,52 @@ const CATEGORIES: { value: ProductType | "all"; label: string }[] = [
 export function HomeClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [whatsapp, setWhatsapp] = useState<string>();
+  const [gallery, setGallery] = useState<ShowcaseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<ProductType | "all">("all");
 
   useEffect(() => {
     (async () => {
-      const [prods, setting] = await Promise.all([
+      const [prods, setting, galleryRows] = await Promise.all([
         fetchProducts(),
         fetchSetting("whatsapp_number"),
+        fetchGalleryImages(),
       ]);
       setProducts(prods);
       setWhatsapp(setting?.whatsapp as string | undefined);
+      setGallery(
+        galleryRows
+          .filter((g) => g.active)
+          .map((g) => ({
+            key: g.id,
+            image_url: g.image_url,
+            alt: g.alt,
+            orientation: g.orientation as GalleryOrientation,
+          })),
+      );
       setLoading(false);
     })();
   }, []);
+
+  const galleryItems: ShowcaseItem[] = useMemo(() => {
+    if (gallery.length > 0) return gallery.slice(0, 6);
+    const orientations: GalleryOrientation[] = [
+      "portrait",
+      "square",
+      "landscape",
+      "portrait",
+      "square",
+      "landscape",
+    ];
+    return Array.from({ length: 6 }, (_, i) => products[i % products.length])
+      .filter((p) => p)
+      .map((p, i) => ({
+        key: p.slug,
+        image_url: p.image_urls[0],
+        alt: p.name,
+        orientation: orientations[i % orientations.length],
+      }));
+  }, [gallery, products]);
 
   const filtered = useMemo(
     () =>
@@ -50,7 +82,7 @@ export function HomeClient() {
       <main className="flex-1">
         <HeroRotation />
 
-        {products.length > 0 && <ShowcaseMarquee products={products} />}
+        {galleryItems.length > 0 && <ShowcaseMarquee gallery={galleryItems} />}
 
         <section id="products" className="mx-auto max-w-6xl px-4 py-16">
           <div className="mb-8 flex justify-center">

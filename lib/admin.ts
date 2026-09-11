@@ -12,6 +12,8 @@ import type {
   OrderWithItems,
   Product,
   ProductType,
+  GalleryImage,
+  GalleryOrientation,
 } from "@/lib/database.types";
 
 export function hasSupabase() {
@@ -221,5 +223,137 @@ export async function saveStoreSettings(settings: StoreSettings): Promise<boolea
     key: "store",
     value: settings as never,
   });
+  return !error;
+}
+
+// ---------------------------------------------------------------- Gallery
+
+const DEMO_GALLERY_KEY = "ante-demo-gallery";
+
+export function demoGalleryImages(): GalleryImage[] {
+  if (typeof window === "undefined") return [];
+  const stored = getStored<GalleryImage[]>(DEMO_GALLERY_KEY, null as never);
+  if (stored) return stored;
+  return SEED_GALLERY_IMAGES;
+}
+
+const SEED_GALLERY_IMAGES: GalleryImage[] = seedGalleryRows();
+
+function seedGalleryRows(): GalleryImage[] {
+  const base = [
+    "https://placehold.co/600x600/eff6ff/1e3a8a?text=Scrub",
+    "https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat+Men",
+    "https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat+Women",
+    "https://placehold.co/600x600/e2e8f0/0f172a?text=Scrub+Half",
+    "https://placehold.co/600x600/eff6ff/1e3a8a?text=Detail",
+    "https://placehold.co/600x600/f8fafc/1e3a8a?text=Fitting",
+  ] as const;
+  const orientations: GalleryOrientation[] = [
+    "portrait",
+    "square",
+    "portrait",
+    "square",
+    "landscape",
+    "landscape",
+  ];
+  return base.map((url, i) => ({
+    id: `seed-gallery-${i}`,
+    image_url: url,
+    alt: "",
+    orientation: orientations[i],
+    active: true,
+    position: i,
+    created_at: new Date(0).toISOString(),
+    updated_at: new Date(0).toISOString(),
+  }));
+}
+
+export async function fetchGalleryImages(): Promise<GalleryImage[]> {
+  if (!hasSupabase()) return demoGalleryImages();
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("gallery_images")
+    .select("*")
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("fetchGalleryImages error", error);
+    return demoGalleryImages();
+  }
+  return data ?? [];
+}
+
+export async function saveGalleryImage(
+  image: Partial<GalleryImage> & { id?: string },
+): Promise<{ ok: boolean; error?: string }> {
+  if (!hasSupabase()) {
+    const gallery = demoGalleryImages();
+    if (image.id) {
+      setStored(
+        DEMO_GALLERY_KEY,
+        gallery.map((g) => (g.id === image.id ? { ...g, ...image } : g)),
+      );
+    } else {
+      setStored(DEMO_GALLERY_KEY, [
+        ...gallery,
+        {
+          id: `demo-g-${Date.now()}`,
+          image_url: image.image_url ?? "",
+          alt: image.alt ?? "",
+          orientation: image.orientation ?? "square",
+          active: true,
+          position: gallery.length,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ]);
+    }
+    return { ok: true };
+  }
+
+  const supabase = createClient();
+  if (image.id) {
+    const { id: _id, ...rest } = image;
+    const { error } = await supabase
+      .from("gallery_images")
+      .update({ ...rest, updated_at: new Date().toISOString() })
+      .eq("id", image.id);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  }
+  const { error } = await supabase.from("gallery_images").insert({
+    image_url: image.image_url ?? "",
+    alt: image.alt ?? "",
+    orientation: image.orientation ?? "square",
+    active: true,
+    position: (await maxGalleryPosition()) + 1,
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+async function maxGalleryPosition(): Promise<number> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("gallery_images")
+    .select("position")
+    .order("position", { ascending: false })
+    .limit(1);
+  return data && data.length > 0 ? ((data[0] as { position: number }).position ?? 0) : -1;
+}
+
+export async function deleteGalleryImage(id: string): Promise<boolean> {
+  if (!hasSupabase()) {
+    setStored(
+      DEMO_GALLERY_KEY,
+      demoGalleryImages().filter((g) => g.id !== id),
+    );
+    return true;
+  }
+  const supabase = createClient();
+  const { error } = await supabase.from("gallery_images").delete().eq("id", id);
+  if (error) console.error(error);
   return !error;
 }

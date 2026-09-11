@@ -176,6 +176,32 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["settings"]["Insert"]>;
         Relationships: [];
       };
+      gallery_images: {
+        Row: {
+          id: string;
+          image_url: string;
+          alt: string;
+          orientation: GalleryOrientation;
+          active: boolean;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          image_url: string;
+          alt?: string;
+          orientation?: GalleryOrientation;
+          active?: boolean;
+          position?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["gallery_images"]["Insert"]
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -197,6 +223,8 @@ export type ProductType =
 
 export type PaymentMethod = "instapay" | "orange_cash";
 
+export type GalleryOrientation = "square" | "portrait" | "landscape";
+
 export type OrderStatus =
   | "pending"
   | "confirmed"
@@ -212,6 +240,8 @@ export type Order = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
 export type PaymentMethodRow =
   Database["public"]["Tables"]["payment_methods"]["Row"];
+export type GalleryImage =
+  Database["public"]["Tables"]["gallery_images"]["Row"];
 
 export type OrderWithItems = Order & { order_items: OrderItem[] };
 

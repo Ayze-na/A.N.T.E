@@ -1,10 +1,16 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Product, PresetLogo, PaymentMethodRow } from "@/lib/database.types";
 import {
   SEED_PAYMENT_METHODS,
   SEED_PRESET_LOGOS,
   SEED_PRODUCTS,
 } from "@/lib/seed";
+import type {
+  Product,
+  PresetLogo,
+  PaymentMethodRow,
+  GalleryImage,
+  GalleryOrientation,
+} from "@/lib/database.types";
 
 function hasSupabase() {
   return Boolean(
@@ -104,4 +110,45 @@ export async function fetchSetting(key: string): Promise<Record<string, unknown>
   const raw = (data as unknown as { value: unknown }).value;
   if (!raw || typeof raw !== "object") return null;
   return raw as Record<string, unknown>;
+}
+
+const SEED_GALLERY_IMAGES: {
+  image_url: string;
+  alt: string;
+  orientation: GalleryOrientation;
+}[] = [
+  { image_url: "https://placehold.co/600x600/eff6ff/1e3a8a?text=Scrub", alt: "", orientation: "portrait" },
+  { image_url: "https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat+Men", alt: "", orientation: "square" },
+  { image_url: "https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat+Women", alt: "", orientation: "portrait" },
+  { image_url: "https://placehold.co/600x600/e2e8f0/0f172a?text=Scrub+Half", alt: "", orientation: "square" },
+  { image_url: "https://placehold.co/600x600/eff6ff/1e3a8a?text=Detail", alt: "", orientation: "landscape" },
+  { image_url: "https://placehold.co/600x600/f8fafc/1e3a8a?text=Fitting", alt: "", orientation: "landscape" },
+];
+
+export async function fetchGalleryImages(): Promise<GalleryImage[]> {
+  if (!hasSupabase()) {
+    return SEED_GALLERY_IMAGES.map((g, i) => ({
+      id: `seed-gallery-${i}`,
+      image_url: g.image_url,
+      alt: g.alt,
+      orientation: g.orientation,
+      active: true,
+      position: i,
+      created_at: new Date(0).toISOString(),
+      updated_at: new Date(0).toISOString(),
+    }));
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("gallery_images")
+    .select("*")
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("fetchGalleryImages error", error);
+    return [];
+  }
+  return data ?? [];
 }
