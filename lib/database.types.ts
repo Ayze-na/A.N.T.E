@@ -145,6 +145,7 @@ export interface Database {
         Row: {
           id: string;
           method: PaymentMethod;
+          label: string;
           phone_number: string;
           account_holder: string;
           is_active: boolean;
@@ -153,6 +154,7 @@ export interface Database {
         Insert: {
           id?: string;
           method: PaymentMethod;
+          label?: string;
           phone_number: string;
           account_holder?: string;
           is_active?: boolean;
@@ -223,7 +225,7 @@ export type ProductType =
   | "coat-men"
   | "coat-women";
 
-export type PaymentMethod = "instapay" | "orange_cash";
+export type PaymentMethod = string;
 
 export type GalleryOrientation = "square" | "portrait" | "landscape";
 

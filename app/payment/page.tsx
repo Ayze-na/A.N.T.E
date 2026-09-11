@@ -11,7 +11,7 @@ import { useCartStore } from "@/store/cart";
 import { fetchPaymentMethods } from "@/lib/api";
 import { placeOrder } from "@/lib/orders";
 import { formatPrice } from "@/lib/utils";
-import { DEPOSIT_PERCENTAGE, PAYMENT_METHOD_LABELS } from "@/lib/constants";
+import { DEPOSIT_PERCENTAGE, paymentMethodLabel } from "@/lib/constants";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import type { PaymentMethod, PaymentMethodRow } from "@/lib/database.types";
@@ -164,7 +164,7 @@ export default function PaymentPage() {
               </span>
               <span className="flex-1">
                 <span className="font-black text-ink-900">
-                  {PAYMENT_METHOD_LABELS[m.method]}
+                  {paymentMethodLabel(m.method, m.label)}
                 </span>
                 <span className="mt-0.5 block text-sm text-ink-500">
                   لحساب: {m.account_holder || "A.N.T.E"}

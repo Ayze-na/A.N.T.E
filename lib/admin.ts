@@ -10,6 +10,7 @@ import type {
   OrderItem,
   OrderStatus,
   OrderWithItems,
+  PaymentMethodRow,
   Product,
   ProductType,
   GalleryImage,
@@ -223,6 +224,54 @@ export async function saveStoreSettings(settings: StoreSettings): Promise<boolea
     key: "store",
     value: settings as never,
   });
+  return !error;
+}
+
+// ---------------------------------------------------------------- Payment methods
+
+export async function fetchAllPaymentMethods(): Promise<PaymentMethodRow[]> {
+  if (!hasSupabase()) return [];
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("payment_methods")
+    .select("*")
+    .order("updated_at", { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}
+
+export async function savePaymentMethod(
+  id: string,
+  patch: Partial<Pick<PaymentMethodRow, "method" | "label" | "phone_number" | "account_holder" | "is_active">>,
+): Promise<boolean> {
+  if (!hasSupabase()) return true;
+  const supabase = createClient();
+  const { error } = await supabase.from("payment_methods").update(patch).eq("id", id);
+  return !error;
+}
+
+export async function addPaymentMethod(input: {
+  method: string;
+  label: string;
+  phone_number: string;
+  account_holder: string;
+  is_active: boolean;
+}): Promise<PaymentMethodRow | null> {
+  if (!hasSupabase()) return null;
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("payment_methods")
+    .insert(input)
+    .select()
+    .single();
+  if (error) return null;
+  return data;
+}
+
+export async function deletePaymentMethod(id: string): Promise<boolean> {
+  if (!hasSupabase()) return true;
+  const supabase = createClient();
+  const { error } = await supabase.from("payment_methods").delete().eq("id", id);
   return !error;
 }
 

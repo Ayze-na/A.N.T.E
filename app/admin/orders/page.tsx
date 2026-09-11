@@ -6,12 +6,12 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
-import { fetchAdminOrders, updateOrderStatusDb } from "@/lib/admin";
+import { fetchAdminOrders, updateOrderStatusDb, fetchAllPaymentMethods } from "@/lib/admin";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_OPTIONS,
   ORDER_STATUS_STYLES,
-  PAYMENT_METHOD_LABELS,
+  paymentMethodLabel,
 } from "@/lib/constants";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
@@ -24,11 +24,18 @@ export default function AdminOrdersPage() {
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [selected, setSelected] = useState<OrderWithItems | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [methodLabels, setMethodLabels] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await fetchAdminOrders();
+    const [data, methods] = await Promise.all([
+      fetchAdminOrders(),
+      fetchAllPaymentMethods(),
+    ]);
     setOrders(data);
+    setMethodLabels(
+      Object.fromEntries(methods.map((m) => [m.method, m.label || m.method])),
+    );
     setLoading(false);
   }, []);
 
@@ -96,7 +103,7 @@ export default function AdminOrdersPage() {
           subtotal: o.subtotal,
           deposit: o.deposit_amount,
           remaining: o.remaining_amount,
-          payment_method: PAYMENT_METHOD_LABELS[o.payment_method],
+          payment_method: paymentMethodLabel(o.payment_method, methodLabels[o.payment_method]),
           status: ORDER_STATUS_LABELS[o.status],
         });
       });
@@ -185,7 +192,7 @@ export default function AdminOrdersPage() {
                     </td>
                     <td className="px-4 py-3 text-ink-600">{formatPrice(o.deposit_amount)}</td>
                     <td className="px-4 py-3 text-xs text-ink-500">
-                      {PAYMENT_METHOD_LABELS[o.payment_method]}
+                      {paymentMethodLabel(o.payment_method, methodLabels[o.payment_method])}
                     </td>
                     <td className="px-4 py-3">
                       <Badge className={ORDER_STATUS_STYLES[o.status]}>
@@ -262,7 +269,7 @@ export default function AdminOrdersPage() {
                   <Info label="الباقي عند الاستلام" value={formatPrice(selected.remaining_amount)} />
                   <Info
                     label="الوسيلة"
-                    value={PAYMENT_METHOD_LABELS[selected.payment_method]}
+                    value={paymentMethodLabel(selected.payment_method, methodLabels[selected.payment_method])}
                   />
                 </dl>
                 {selected.payment_proof_url ? (

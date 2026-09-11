@@ -115,6 +115,7 @@ export const SEED_PRESET_LOGOS: PresetLogo[] = [
 export const SEED_PAYMENT_METHODS: {
   id: string;
   method: PaymentMethod;
+  label?: string;
   phone_number: string;
   account_holder: string;
   is_active: boolean;
@@ -123,6 +124,7 @@ export const SEED_PAYMENT_METHODS: {
   {
     id: "pm-instapay",
     method: "instapay",
+    label: "إنستاباي InstaPay",
     phone_number: "01000000000",
     account_holder: "A.N.T.E",
     is_active: true,
@@ -131,6 +133,7 @@ export const SEED_PAYMENT_METHODS: {
   {
     id: "pm-orange",
     method: "orange_cash",
+    label: "أورنج كاش Orange Cash",
     phone_number: "01000000000",
     account_holder: "A.N.T.E",
     is_active: true,

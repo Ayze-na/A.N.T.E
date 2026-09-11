@@ -44,6 +44,10 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   orange_cash: "أورنج كاش Orange Cash",
 };
 
+export function paymentMethodLabel(method: string, label?: string): string {
+  return label || PAYMENT_METHOD_LABELS[method] || method;
+}
+
 export const SIZES = [
   "S",
   "M",

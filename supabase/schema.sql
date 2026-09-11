@@ -62,7 +62,7 @@ create table if not exists public.orders (
   subtotal integer not null default 0,
   deposit_amount integer not null default 0,
   remaining_amount integer not null default 0,
-  payment_method public.payment_method not null,
+  payment_method text not null,
   payment_proof_url text,
   status public.order_status not null default 'pending',
   notes text,
@@ -86,7 +86,8 @@ create table if not exists public.order_items (
 
 create table if not exists public.payment_methods (
   id uuid primary key default gen_random_uuid(),
-  method public.payment_method not null unique,
+  method text not null unique,
+  label text not null default '',
   phone_number text not null,
   account_holder text not null default '',
   is_active boolean not null default true,
@@ -119,9 +120,9 @@ values
 ('بالطو طبي رجالي — أبيض', 'coat-men-white', 'coat-men', 'جبردين', 'بالطو طبي رجالي قماش جبردين فاخر.', array['أبيض'], array['M','L','XL','XXL'], array['https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat'], 600, true),
 
   ('بالطو طبي حريمي — أبيض', 'coat-women-white', 'coat-women', 'جبردين', 'بالطو طبي حريمي بقصّة أنيقة.', array['أبيض'], array['M','L','XL','XXL'], array['https://placehold.co/600x600/f8fafc/1e3a8a?text=Coat'], 580, true);
-insert into public.payment_methods (method, phone_number, account_holder) values
-  ('instapay', '01000000000', 'A.N.T.E'),
-  ('orange_cash', '01000000000', 'A.N.T.E');
+insert into public.payment_methods (method, label, phone_number, account_holder) values
+  ('instapay', 'إنستاباي InstaPay', '01000000000', 'A.N.T.E'),
+  ('orange_cash', 'أورنج كاش Orange Cash', '01000000000', 'A.N.T.E');
 insert into public.gallery_images (image_url, alt, orientation, position)
 values
   ('https://placehold.co/600x600/eff6ff/1e3a8a?text=Scrub', 'اسكراب طويل كم أزرق', 'portrait', 0),
@@ -165,6 +166,9 @@ create policy "order_items_admin_delete" on public.order_items for delete using 
 
 -- Payment methods: public needs to see phone numbers at checkout.
 create policy "payment_methods_read_all" on public.payment_methods for select using (true);
+create policy "payment_methods_admin_insert" on public.payment_methods for insert with check (auth.role() = 'authenticated');
+create policy "payment_methods_admin_update" on public.payment_methods for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "payment_methods_admin_delete" on public.payment_methods for delete using (auth.role() = 'authenticated');
 
 -- Settings: read for all (used for store config), write admin only.
 create policy "settings_read_all" on public.settings for select using (true);
