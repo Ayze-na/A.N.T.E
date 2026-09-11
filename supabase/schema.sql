@@ -153,14 +153,13 @@ create policy "preset_logos_admin_update" on public.preset_logos for update usin
 create policy "preset_logos_admin_delete" on public.preset_logos for delete using (auth.role() = 'authenticated');
 
 -- Orders / order_items:
---   Guests place orders (insert is public to support guest checkout).
+--   Orders are created through the server route (POST /api/orders) using the
+--   service-role key, so no guest INSERTS policies are defined.
 --   Only authenticated admin can read / update / delete.
 create policy "orders_admin_read" on public.orders for select using (auth.role() = 'authenticated');
-create policy "orders_guest_insert" on public.orders for insert with check (true);
 create policy "orders_admin_update" on public.orders for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "orders_admin_delete" on public.orders for delete using (auth.role() = 'authenticated');
 create policy "order_items_admin_read" on public.order_items for select using (auth.role() = 'authenticated');
-create policy "order_items_guest_insert" on public.order_items for insert with check (true);
 create policy "order_items_admin_update" on public.order_items for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "order_items_admin_delete" on public.order_items for delete using (auth.role() = 'authenticated');
 
@@ -185,17 +184,21 @@ create policy "gallery_admin_delete" on public.gallery_images for delete using (
 insert into storage.buckets (id, name, public) values
   ('product-images', 'product-images', true),
   ('preset-logos', 'preset-logos', true),
-  ('uploaded-logos', 'uploaded-logos', true),
-  ('payment-proofs', 'payment-proofs', true),
+  ('uploaded-logos', 'uploaded-logos', false),
+  ('payment-proofs', 'payment-proofs', false),
   ('gallery-images', 'gallery-images', true)
 on conflict (id) do update set public = excluded.public;
 
--- Public read on all buckets (proofs/logos are referenced by plain URLs)
+-- Public read on storefront buckets (products / logo presets / gallery).
 create policy "gallery_images_public_read" on storage.objects for select using (bucket_id = 'gallery-images');
 create policy "product_images_public_read" on storage.objects for select using (bucket_id = 'product-images');
 create policy "preset_logos_public_read" on storage.objects for select using (bucket_id = 'preset-logos');
-create policy "uploaded_logos_public_read" on storage.objects for select using (bucket_id = 'uploaded-logos');
-create policy "payment_proofs_public_read" on storage.objects for select using (bucket_id = 'payment-proofs');
+
+-- uploaded-logos + payment-proofs are PRIVATE (guest UGC): no public read or
+-- insert. Files are only written by the server-side order route (service
+-- role) and read by admins through short-lived signed URLs.
+create policy "uploaded_logos_admin_read" on storage.objects for select using (bucket_id = 'uploaded-logos' and auth.role() = 'authenticated');
+create policy "payment_proofs_admin_read" on storage.objects for select using (bucket_id = 'payment-proofs' and auth.role() = 'authenticated');
 
 -- Authenticated admin manages product-images / preset-logos
 create policy "product_images_admin_upload" on storage.objects for insert with check (bucket_id = 'product-images' and auth.role() = 'authenticated');
@@ -210,11 +213,14 @@ create policy "gallery_images_admin_upload" on storage.objects for insert with c
 create policy "gallery_images_admin_update" on storage.objects for update using (bucket_id = 'gallery-images' and auth.role() = 'authenticated') with check (bucket_id = 'gallery-images');
 create policy "gallery_images_admin_delete" on storage.objects for delete using (bucket_id = 'gallery-images' and auth.role() = 'authenticated');
 
--- Anyone can upload a logo (guest customization) into uploaded-logos
-create policy "uploaded_logos_public_insert" on storage.objects for insert with check (bucket_id = 'uploaded-logos');
+-- Payment proofs: admin-only read (signed URLs). Write happens server-side
+-- via the service-role key, so no storage insert policy is required for the
+-- anon or authenticated role.
 
--- Payment proofs: public insert (guest), public read (plain URL)
-create policy "payment_proofs_public_insert" on storage.objects for insert with check (bucket_id = 'payment-proofs');
+-- ---------- Orders: guest checkout now goes through the server route
+-- (POST /api/orders with the service-role key), so guests can no longer
+-- insert orders/items directly. All writes are admin/session-gated except
+-- the read of product catalog etc.
 
 -- ---------- Admin auth (passwordless via Resend email links) ----------
 -- Requires: "Allow new users to sign up" = OFF, Resend configured in

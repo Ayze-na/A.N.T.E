@@ -24,6 +24,7 @@ type CheckoutData = {
   city: string;
   subtotal: number;
   deposit: number;
+  website?: string;
 };
 
 export default function PaymentPage() {
@@ -87,6 +88,7 @@ export default function PaymentPage() {
       payment_method: selected,
       payment_proof_data: proof,
       payment_proof_name: proofFile?.name,
+      honeypot: checkout.website ?? "",
     });
     setSubmitting(false);
 

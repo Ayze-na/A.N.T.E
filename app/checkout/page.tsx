@@ -32,6 +32,7 @@ export default function CheckoutPage() {
     phone_2: "",
     address: "",
     city: "",
+    website: "",
   });
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -156,7 +157,20 @@ export default function CheckoutPage() {
                     error={errors.address}
                   />
                 </div>
+              <div className="hidden" aria-hidden="true">
+                <label>
+                  لا تملأ هذا الحقل
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={form.website}
+                    onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
+                  />
+                </label>
               </div>
+            </div>
             </div>
 
             <Button type="submit" size="lg" className="w-full" loading={submitting}>

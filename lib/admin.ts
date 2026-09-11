@@ -29,6 +29,40 @@ export function isDemoAdminCookie(cookie: string) {
   return cookie === "1";
 }
 
+/**
+ * Resolves a stored object reference (path, legacy public URL or demo data
+ * URL) into a viewable URL for the admin. Uses a short-lived signed URL so
+ * private buckets (uploaded-logos / payment-proofs) stay private to the
+ * public while remaining visible to admins.
+ */
+export async function resolveStorageSignedUrl(
+  bucket: string,
+  ref: string | null,
+  expiresIn = 3600,
+): Promise<string | null> {
+  if (!ref) return null;
+  if (ref.startsWith("data:")) return ref;
+
+  const supabase = createClient();
+
+  let path = ref;
+  if (/^https?:\/\//.test(ref)) {
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const idx = ref.indexOf(marker);
+    if (idx === -1) {
+      // Legacy URL from a bucket that is now private — cannot be salvaged.
+      return null;
+    }
+    path = ref.slice(idx + marker.length);
+  }
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, expiresIn);
+  if (error || !data) return null;
+  return data.signedUrl;
+}
+
 // ---------------------------------------------------------------- Orders
 
 export async function fetchAdminOrders(): Promise<OrderWithItems[]> {

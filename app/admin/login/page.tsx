@@ -30,16 +30,19 @@ function LoginForm() {
     }
 
     try {
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        },
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), next }),
       });
-      if (error) {
-        setError("تعذر إرسال رابط الدخول، تأكد من البريد الإلكتروني");
+      if (res.status === 429) {
+        setError("محاولات كثيرة، حاول بعد فترة");
+        setLoading(false);
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        setError("تعذر إرسال رابط الدخول، حاول مرة أخرى");
         setLoading(false);
         return;
       }

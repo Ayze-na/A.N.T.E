@@ -6,7 +6,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
-import { fetchAdminOrders, updateOrderStatusDb, fetchAllPaymentMethods } from "@/lib/admin";
+import { fetchAdminOrders, updateOrderStatusDb, fetchAllPaymentMethods, resolveStorageSignedUrl } from "@/lib/admin";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_OPTIONS,
@@ -25,6 +25,43 @@ export default function AdminOrdersPage() {
   const [selected, setSelected] = useState<OrderWithItems | null>(null);
   const [exporting, setExporting] = useState(false);
   const [methodLabels, setMethodLabels] = useState<Record<string, string>>({});
+  const [proofSrc, setProofSrc] = useState<string | null>(null);
+  const [logoSrcs, setLogoSrcs] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!selected) {
+      setProofSrc(null);
+      setLogoSrcs({});
+      return;
+    }
+    let live = true;
+    (async () => {
+      const proof = selected.payment_proof_url
+        ? await resolveStorageSignedUrl("payment-proofs", selected.payment_proof_url)
+        : null;
+      const logos: Record<string, string> = {};
+      await Promise.all(
+        selected.order_items.map(async (item) => {
+          if (
+            item.customization_type === "uploaded" &&
+            item.customization_logo_url_or_preset_id
+          ) {
+            const src = await resolveStorageSignedUrl(
+              "uploaded-logos",
+              item.customization_logo_url_or_preset_id,
+            );
+            if (src) logos[item.id] = src;
+          }
+        }),
+      );
+      if (!live) return;
+      setProofSrc(proof);
+      setLogoSrcs(logos);
+    })();
+    return () => {
+      live = false;
+    };
+  }, [selected]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -272,23 +309,21 @@ export default function AdminOrdersPage() {
                     value={paymentMethodLabel(selected.payment_method, methodLabels[selected.payment_method])}
                   />
                 </dl>
-                {selected.payment_proof_url ? (
+                {proofSrc ? (
                   <a
-                    href={selected.payment_proof_url}
+                    href={proofSrc}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-primary-700 hover:underline"
                   >
                     فتح إثبات الدفع
-                    {selected.payment_proof_url.startsWith("data:") ? (
-                      <Image
-                        src={selected.payment_proof_url}
-                        alt="إثبات"
-                        width={48}
-                        height={48}
-                        className="rounded-lg object-cover"
-                      />
-                    ) : null}
+                    <Image
+                      src={proofSrc}
+                      alt="إثبات"
+                      width={48}
+                      height={48}
+                      className="rounded-lg object-cover"
+                    />
                   </a>
                 ) : (
                   <p className="mt-2 text-xs text-ink-400">لا يوجد إثبات دفع</p>
@@ -315,11 +350,11 @@ export default function AdminOrdersPage() {
                       {item.name_tag_text && ` • الاسم: ${item.name_tag_text}`}
                     </p>
                     {item.customization_type === "uploaded" &&
-                      item.customization_logo_url_or_preset_id && (
+                      logoSrcs[item.id] && (
                         <div className="mt-1 flex items-center gap-2">
                           <span className="text-[10px] font-bold text-ink-400">شعار مرفوع:</span>
                           <Image
-                            src={item.customization_logo_url_or_preset_id}
+                            src={logoSrcs[item.id]}
                             alt="شعار"
                             width={32}
                             height={32}

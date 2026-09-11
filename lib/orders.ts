@@ -1,7 +1,4 @@
-import { createClient } from "@/lib/supabase/client";
-import {
-  DEPOSIT_PERCENTAGE,
-} from "@/lib/constants";
+import { DEPOSIT_PERCENTAGE } from "@/lib/constants";
 import { generateOrderNumber, getStored, setStored } from "@/lib/utils";
 import type {
   CartItem,
@@ -19,7 +16,39 @@ export type PlaceOrderInput = {
   payment_method: PaymentMethod;
   payment_proof_data?: string | null;
   payment_proof_name?: string | null;
+  honeypot?: string;
 };
+
+/**
+ * Downscales an image data URL (browser-only) so uploaded proofs/logos stay
+ * far below API payload limits even for 5MB phone screenshots.
+ */
+async function compressImage(dataUrl: string, maxDim = 1280, quality = 0.82): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(dataUrl);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      } catch {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
 
 export const DEMO_ORDERS_KEY = "ante-demo-orders";
 
@@ -33,11 +62,6 @@ function hasSupabase() {
 
 export function demoOrders(): OrderWithItems[] {
   return getStored<OrderWithItems[]>(DEMO_ORDERS_KEY, []);
-}
-
-async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
-  const res = await fetch(dataUrl);
-  return res.blob();
 }
 
 export async function placeOrder(input: PlaceOrderInput): Promise<{
@@ -91,90 +115,54 @@ export async function placeOrder(input: PlaceOrderInput): Promise<{
     return { ok: true, orderNumber };
   }
 
-  // ---- SUPABASE MODE
-  const supabase = createClient();
+  // ---- SUPABASE MODE: delegate to the server route which re-validates the
+  // order server-side (authoritative prices, stock, sizes, colors) and
+  // persists it with the service-role key.
   try {
-    const publicUrl = (bucket: string, path: string) =>
-      supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+    const [proofData, compressedItems] = await Promise.all([
+      input.payment_proof_data
+        ? compressImage(input.payment_proof_data)
+        : Promise.resolve(null),
+      Promise.all(
+        input.items.map(async (item) => ({
+          ...item,
+          customization:
+            item.customization && item.customization.type === "uploaded" && item.customization.logo_url
+              ? {
+                  ...item.customization,
+                  logo_url: await compressImage(item.customization.logo_url),
+                }
+              : item.customization,
+        })),
+      ),
+    ]);
 
-    let proofUrl: string | null = null;
-    if (input.payment_proof_data) {
-      const blob = await dataUrlToBlob(input.payment_proof_data);
-      if (blob.size > 5 * 1024 * 1024) {
-        return { ok: false, error: "حجم الإثبات أكبر من 5MB" };
-      }
-      const path = `${orderNumber}/proof-${Date.now()}`;
-      const { error: upErr } = await supabase.storage
-        .from("payment-proofs")
-        .upload(path, blob, { contentType: blob.type || "image/png" });
-      if (upErr) throw upErr;
-      proofUrl = publicUrl("payment-proofs", path);
-    }
-
-    // Uploaded customization logos -> uploaded-logos bucket
-    const resolvedItems = await Promise.all(
-      input.items.map(async (item) => {
-        let logoRef: string | null = null;
-        if (item.customization?.type === "uploaded" && item.customization.logo_url) {
-          const blob = await dataUrlToBlob(item.customization.logo_url);
-          if (blob.size > 5 * 1024 * 1024) {
-            return { ok: false as const, item, error: "حجم الشعار أكبر من 5MB" };
-          }
-          const path = `${orderNumber}/logo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          const { error: upErr } = await supabase.storage
-            .from("uploaded-logos")
-            .upload(path, blob, { contentType: blob.type || "image/png" });
-          if (upErr) throw upErr;
-          logoRef = publicUrl("uploaded-logos", path);
-        }
-        return {
-          ok: true as const,
-          item,
-          logoRef: item.customization?.type === "preset"
-            ? item.customization.preset_id
-            : logoRef,
-        };
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer_name: input.customer_name,
+        phone_1: input.phone_1,
+        phone_2: input.phone_2,
+        address: input.address,
+        city: input.city,
+        items: compressedItems,
+        payment_method: input.payment_method,
+        payment_proof_data: proofData,
+        payment_proof_name: input.payment_proof_name,
+        honeypot: input.honeypot ?? "",
       }),
-    );
-
-    const failed = resolvedItems.find((r) => !r.ok);
-    if (failed) return { ok: false, error: failed.error };
-
-    const orderId = crypto.randomUUID();
-    const { error: orderErr } = await supabase.from("orders").insert({
-      id: orderId,
-      order_number: orderNumber,
-      customer_name: input.customer_name,
-      phone_1: input.phone_1,
-      phone_2: input.phone_2,
-      address: input.address,
-      city: input.city,
-      subtotal,
-      deposit_amount: deposit,
-      remaining_amount: remaining,
-      payment_method: input.payment_method,
-      payment_proof_url: proofUrl,
-      status: "pending",
     });
-    if (orderErr) throw orderErr;
 
-    const { error: itemsErr } = await supabase.from("order_items").insert(
-      resolvedItems.map((r) => ({
-        order_id: orderId,
-        product_id: r.item.productId,
-        product_name: r.item.name,
-        size: r.item.size,
-        color: r.item.color,
-        quantity: r.item.quantity,
-        unit_price: r.item.unit_price,
-        customization_type: r.item.customization?.type ?? "none",
-        customization_logo_url_or_preset_id: r.logoRef,
-        name_tag_text: r.item.customization?.name_tag_text ?? null,
-      })),
-    );
-    if (itemsErr) throw itemsErr;
-
-    return { ok: true, orderNumber };
+    const data = await res.json().catch(() => ({})) as {
+      ok?: boolean;
+      orderNumber?: string;
+      error?: string;
+    };
+    if (!res.ok || !data?.ok) {
+      return { ok: false, error: data?.error ?? "حدث خطأ أثناء تسجيل الطلب، حاول مرة أخرى" };
+    }
+    return { ok: true, orderNumber: data.orderNumber };
   } catch (e) {
     console.error("placeOrder error", e);
     return { ok: false, error: "حدث خطأ أثناء تسجيل الطلب، حاول مرة أخرى" };
