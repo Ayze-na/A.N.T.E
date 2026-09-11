@@ -46,6 +46,7 @@ create table if not exists public.preset_logos (
   id uuid primary key default gen_random_uuid(),
   image_url text not null,
   label text not null,
+  category text not null default 'عام',
   active boolean not null default true,
   created_at timestamptz not null default now()
 );

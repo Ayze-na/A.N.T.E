@@ -56,6 +56,7 @@ export interface Database {
           id: string;
           image_url: string;
           label: string;
+          category: string;
           active: boolean;
           created_at: string;
         };
@@ -63,6 +64,7 @@ export interface Database {
           id?: string;
           image_url: string;
           label: string;
+          category?: string;
           active?: boolean;
           created_at?: string;
         };

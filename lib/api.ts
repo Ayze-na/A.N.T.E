@@ -74,6 +74,7 @@ export async function fetchPresetLogos(): Promise<PresetLogo[]> {
     .from("preset_logos")
     .select("*")
     .eq("active", true)
+    .order("category", { ascending: true })
     .order("created_at", { ascending: true });
 
   if (error) return SEED_PRESET_LOGOS;

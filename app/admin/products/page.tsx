@@ -580,6 +580,7 @@ function PresetLogosSection({
 }) {
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
+  const [category, setCategory] = useState("عام");
   const [imageUrl, setImageUrl] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -611,6 +612,7 @@ function PresetLogosSection({
       id: `logo-${Date.now()}`,
       image_url: url,
       label: label.trim(),
+      category: category.trim() || "عام",
       active: true,
       created_at: new Date().toISOString(),
     };
@@ -618,7 +620,12 @@ function PresetLogosSection({
       const supabase = createClient();
       const { error } = await supabase
         .from("preset_logos")
-        .insert({ image_url: url, label: label.trim(), active: true });
+        .insert({
+          image_url: url,
+          label: label.trim(),
+          category: category.trim() || "عام",
+          active: true,
+        });
       if (error) {
         onToast("فشل الحفظ", "error");
         setBusy(false);
@@ -653,6 +660,9 @@ function PresetLogosSection({
         <div className="mb-4 rounded-2xl border border-primary-200 bg-primary-50 p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <Input label="اسم الشعار" value={label} onChange={(e) => setLabel(e.target.value)} />
+            <Input label="الفئة" value={category} onChange={(e) => setCategory(e.target.value)} list="logo-categories" placeholder="مثال: شعارات طبية"
+              helper={`أو اختر من الموجودة: ${Array.from(new Set(logos.map((l) => l.category))).filter(Boolean).join("، ") || "لا توجد فئات بعد"}`}
+            />
             <Input
               label="رابط الصورة"
               dir="ltr"
@@ -661,6 +671,11 @@ function PresetLogosSection({
               onChange={(e) => setImageUrl(e.target.value)}
             />
           </div>
+          <datalist id="logo-categories">
+            {Array.from(new Set(logos.map((l) => l.category))).filter(Boolean).map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
           <div className="mt-3 flex gap-2">
             <Button size="sm" onClick={addLogo} loading={busy}>
               إضافة
@@ -704,6 +719,11 @@ function PresetLogosSection({
               />
             </div>
             <p className="text-sm font-bold text-ink-700">{logo.label}</p>
+            {logo.category && (
+              <span className="rounded-full bg-primary-100 px-2 py-0.5 text-[11px] font-bold text-primary-700">
+                {logo.category}
+              </span>
+            )}
             {!logo.active && <Badge>غير مفعل</Badge>}
             <Button variant="destructive" size="sm" onClick={() => removeLogo(logo.id)}>
               حذف

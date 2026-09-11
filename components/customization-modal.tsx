@@ -34,6 +34,7 @@ export function CustomizationModal({
   const [activeTab, setActiveTab] = useState<(typeof MENU_ITEMS)[number]>("upload");
   const [presets, setPresets] = useState<PresetLogo[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<PresetLogo | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [nameText, setNameText] = useState("");
@@ -55,16 +56,20 @@ export function CustomizationModal({
       fetchPresetLogos().then((logos) => {
         setPresets(logos);
         if (initial?.type === "preset" && initial.preset_id) {
-          setSelectedPreset(
+          const found =
             logos.find((l) => l.id === initial.preset_id) ??
-              ({
-                id: initial.preset_id,
-                image_url: initial.logo_url ?? "",
-                label: "",
-                active: true,
-                created_at: "",
-              } as PresetLogo),
-          );
+            ({
+              id: initial.preset_id,
+              image_url: initial.logo_url ?? "",
+              label: "",
+              category: "عام",
+              active: true,
+              created_at: "",
+            } as PresetLogo);
+          setSelectedPreset(found);
+          setCategoryFilter(found.category || "all");
+        } else {
+          setCategoryFilter("all");
         }
       });
     }
@@ -196,42 +201,75 @@ export function CustomizationModal({
 
         {activeTab === "preset" && (
           <>
-            <label className="mb-2 block text-xs font-bold text-ink-500">
-              اختر من الشعارات الجاهزة
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              {presets.length === 0 && (
-                <p className="col-span-3 py-6 text-center text-sm text-ink-400">
-                  لا توجد شعارات جاهزة حالياً
-                </p>
-              )}
-              {presets.map((preset) => (
-                <button
-                  key={preset.id}
-                  onClick={() => {
-                    setSelectedPreset(preset);
-                    setUploadFile(null);
-                  }}
-                  className={cn(
-                    "flex flex-col items-center gap-2 rounded-xl border-2 bg-[#F2F1F7] p-2 transition",
-                    selectedPreset?.id === preset.id
-                      ? "border-primary-600 ring-2 ring-primary-200"
-                      : "border-ink-200 hover:border-primary-300",
+            {(() => {
+              const categories = Array.from(
+                new Set(presets.map((p) => p.category).filter(Boolean)),
+              );
+              const shown = presets.filter(
+                (p) => categoryFilter === "all" || p.category === categoryFilter,
+              );
+              return (
+                <>
+                  <label className="mb-2 block text-xs font-bold text-ink-500">
+                    اختر من الشعارات الجاهزة
+                  </label>
+                  {categories.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      {["all", ...categories].map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            setCategoryFilter(cat);
+                            setSelectedPreset(null);
+                          }}
+                          className={cn(
+                            "rounded-full px-3 py-1.5 text-xs font-bold transition",
+                            categoryFilter === cat
+                              ? "bg-primary-700 text-white"
+                              : "bg-ink-100 text-ink-600 hover:bg-ink-200",
+                          )}
+                        >
+                          {cat === "all" ? "الكل" : cat}
+                        </button>
+                      ))}
+                    </div>
                   )}
-                >
-                  <Image
-                    src={preset.image_url}
-                    alt={preset.label}
-                    width={80}
-                    height={80}
-                    className="h-14 w-14 rounded-lg object-contain"
-                  />
-                  <span className="text-[11px] font-bold text-ink-600">
-                    {preset.label}
-                  </span>
-                </button>
-              ))}
-            </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {shown.length === 0 && (
+                      <p className="col-span-3 py-6 text-center text-sm text-ink-400">
+                        لا توجد شعارات في هذه الفئة
+                      </p>
+                    )}
+                    {shown.map((preset) => (
+                      <button
+                        key={preset.id}
+                        onClick={() => {
+                          setSelectedPreset(preset);
+                          setUploadFile(null);
+                        }}
+                        className={cn(
+                          "flex flex-col items-center gap-2 rounded-xl border-2 bg-[#F2F1F7] p-2 transition",
+                          selectedPreset?.id === preset.id
+                            ? "border-primary-600 ring-2 ring-primary-200"
+                            : "border-ink-200 hover:border-primary-300",
+                        )}
+                      >
+                        <Image
+                          src={preset.image_url}
+                          alt={preset.label}
+                          width={80}
+                          height={80}
+                          className="h-14 w-14 rounded-lg object-contain"
+                        />
+                        <span className="text-[11px] font-bold text-ink-600">
+                          {preset.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </>
         )}
 
