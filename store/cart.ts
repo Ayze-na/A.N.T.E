@@ -13,53 +13,28 @@ interface CartState {
   clear: () => void;
 }
 
-function keySource(item: {
-  productId: string;
-  size: string;
-  color: string;
-  customization?: CartItem["customization"] | null;
-}): string {
-  return `${item.productId}::${item.size}::${item.color}::${
-    item.customization?.name_tag_text ?? ""
-  }::${item.customization?.preset_id ?? ""}::${item.customization?.logo_url ?? ""}`;
-}
-
-function hashKey(source: string): string {
-  let h1 = 0xdeadbeef;
-  let h2 = 0x41c6ce57;
-  for (let i = 0; i < source.length; i++) {
-    const ch = source.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 =
-    Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^
-    Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 =
-    Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^
-    Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  return (
-    (h2 >>> 0).toString(16).padStart(8, "0") +
-    (h1 >>> 0).toString(16).padStart(8, "0")
-  );
+function instanceKey(): string {
+  return `u${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-6)}`;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
+      // Every unit becomes its own cart line (quantity 1) so that multiple
+      // items of the same product/size can be customized individually.
       addItem: (item) =>
         set((state) => {
-          const key = hashKey(keySource(item));
-          const existing = state.items.find((i) => i.key === key);
-          if (existing) {
-            return {
-              items: state.items.map((i) =>
-                i.key === key ? { ...i, quantity: i.quantity + item.quantity } : i,
-              ),
-            };
-          }
-          return { items: [...state.items, { ...item, key }] };
+          const count = Math.max(1, item.quantity);
+          const units: CartItem[] =
+            count === 1
+              ? [{ ...item, key: instanceKey() }]
+              : Array.from({ length: count }, () => ({
+                  ...item,
+                  quantity: 1,
+                  key: instanceKey(),
+                }));
+          return { items: [...state.items, ...units] };
         }),
       removeItem: (key) =>
         set((state) => ({ items: state.items.filter((i) => i.key !== key) })),
@@ -80,15 +55,17 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "ante-cart",
-      version: 2,
+      version: 3,
       migrate: (persisted) => {
         const { items } = persisted as { items?: CartItem[] };
-        return {
-          items: (items ?? []).map((i) => ({
-            ...i,
-            key: hashKey(keySource(i)),
-          })),
-        };
+        const out: CartItem[] = [];
+        (items ?? []).forEach((i) => {
+          const count = Math.max(1, i.quantity);
+          for (let n = 0; n < count; n++) {
+            out.push({ ...i, quantity: 1, key: instanceKey() });
+          }
+        });
+        return { items: out };
       },
     },
   ),

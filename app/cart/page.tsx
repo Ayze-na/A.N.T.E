@@ -5,9 +5,9 @@ import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useCartStore } from "@/store/cart";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { DEPOSIT_PERCENTAGE } from "@/lib/constants";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CustomizationModal,
   type CustomizationState,
@@ -20,14 +20,35 @@ export default function CartPage() {
   const [editCustom, setEditCustom] = useState<CustomizationState | null>(null);
   const { toast } = useToast();
 
+  const { unitIndex, unitCount } = useMemo(() => {
+    const counts: Record<string, number> = {};
+    items.forEach((i) => {
+      const k = `${i.productId}::${i.size}::${i.color}`;
+      counts[k] = (counts[k] ?? 0) + 1;
+    });
+    const seen: Record<string, number> = {};
+    const index: Record<string, number> = {};
+    items.forEach((i) => {
+      const k = `${i.productId}::${i.size}::${i.color}`;
+      const n = (seen[k] ?? 0) + 1;
+      seen[k] = n;
+      index[i.key] = n;
+    });
+    return { unitIndex: index, unitCount: counts };
+  }, [items]);
+
   const subtotal = items.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
   const deposit = Math.round(subtotal * DEPOSIT_PERCENTAGE);
   const remaining = subtotal - deposit;
 
   const openEdit = (key: string) => {
     const item = items.find((i) => i.key === key);
-    if (!item || !item.customization) return;
-    setEditCustom(item.customization);
+    if (!item) return;
+    setEditCustom(
+      item.customization && item.customization.type !== "none"
+        ? item.customization
+        : null,
+    );
     setEditKey(key);
   };
 
@@ -84,14 +105,31 @@ export default function CartPage() {
                         <p className="mt-0.5 text-xs text-ink-400">
                           {[item.color, item.size].filter(Boolean).join(" — ")}
                         </p>
-                        {item.customization && (
-                          <button
-                            onClick={() => openEdit(item.key)}
-                            className="mt-1 rounded-lg bg-primary-50 px-2 py-0.5 text-xs font-bold text-primary-700 hover:bg-primary-100"
-                          >
-                            ✎ {item.customization.name_tag_text || "شعار"}
-                          </button>
-                        )}
+                        {(() => {
+                          const base = `${item.productId}::${item.size}::${item.color}`;
+                          const total = unitCount[base] ?? 1;
+                          if (total > 1) {
+                            return (
+                              <span className="mt-0.5 inline-block rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-bold text-ink-600">
+                                قطعة {(unitIndex[item.key] ?? 1)} من {total} — تخصيص مستقل
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                        <button
+                          onClick={() => openEdit(item.key)}
+                          className={cn(
+                            "mt-1 rounded-lg px-2 py-0.5 text-xs font-bold hover:bg-primary-100",
+                            item.customization
+                              ? "bg-primary-50 text-primary-700"
+                              : "border border-dashed border-ink-300 text-ink-500",
+                          )}
+                        >
+                          {item.customization
+                            ? `✎ ${item.customization.name_tag_text || "شعار"}`
+                            : "+ تخصيص هذه القطعة"}
+                        </button>
                       </div>
                       <button
                         onClick={() => removeItem(item.key)}
