@@ -291,10 +291,10 @@ export function CustomizationModal({
               onChange={(e) => setNameText(e.target.value)}
               className="h-12 w-full rounded-xl border border-ink-300 bg-[#F2F1F7] px-4 text-lg font-black text-black focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
               placeholder="د. أحمد محمد"
-              maxLength={30}
+              maxLength={100}
             />
             <p className="mt-1 text-left text-[11px] text-ink-400">
-              {nameText.length}/30 حرف
+              {nameText.length}/100 حرف
             </p>
           </div>
         )}
