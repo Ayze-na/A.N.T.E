@@ -18,9 +18,9 @@ const CATEGORIES: { value: ProductType | "all"; label: string }[] = [
   { value: "coat-women", label: "بالطو حريمي" },
 ];
 
-export function HomeClient() {
+export function HomeClient({ initialWhatsapp }: { initialWhatsapp?: string }) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [whatsapp, setWhatsapp] = useState<string>();
+  const [whatsapp, setWhatsapp] = useState<string | undefined>(initialWhatsapp);
   const [gallery, setGallery] = useState<ShowcaseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<ProductType | "all">("all");

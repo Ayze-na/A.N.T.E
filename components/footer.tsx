@@ -1,5 +1,28 @@
-export function Footer({ whatsapp }: { whatsapp?: string }) {
-  const wa = whatsapp || "201000000000";
+"use client";
+
+import { useEffect, useState } from "react";
+import { fetchSetting } from "@/lib/api";
+
+export function Footer({ whatsapp }: { whatsapp?: string | null }) {
+  const [wa, setWa] = useState<string | undefined>(whatsapp ?? undefined);
+
+  useEffect(() => {
+    if (whatsapp) {
+      setWa(whatsapp);
+      return;
+    }
+    let mounted = true;
+    fetchSetting("store").then((s) => {
+      if (!mounted) return;
+      const n = (s as { whatsapp_number?: string } | null)?.whatsapp_number;
+      if (n) setWa(n);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [whatsapp]);
+
+  const link = wa || "201000000000";
   return (
     <footer className="mt-auto border-t border-ink-100 bg-ink-50">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3">
@@ -22,7 +45,7 @@ export function Footer({ whatsapp }: { whatsapp?: string }) {
             <li>
               <a
                 className="inline-flex items-center gap-2 font-semibold text-primary-700 hover:underline"
-                href={`https://wa.me/${wa}`}
+                href={`https://wa.me/${link}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
