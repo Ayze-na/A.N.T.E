@@ -5,13 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { hasSupabase } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
   const params = useSearchParams();
   const router = useRouter();
+  const [mode, setMode] = useState<"password" | "code">("password");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -19,15 +22,56 @@ function LoginForm() {
   const [verifying, setVerifying] = useState(false);
   const isLive = hasSupabase();
   const next = params.get("next") || "/admin";
-  const linkFailed = params.get("error") === "callback";
 
-  const submit = async (e: React.FormEvent) => {
+  const loginWithPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !password) {
+      setError("أدخل البريد وكلمة المرور");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        setError(
+          data?.error === "محاولات كثيرة، حاول بعد فترة"
+            ? "محاولات كثيرة، حاول بعد فترة"
+            : "البريد أو كلمة المرور غير صحيحة",
+        );
+        setLoading(false);
+        return;
+      }
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+      if (signInError) {
+        setError("تعذر الدخول، حاول مرة أخرى");
+        setLoading(false);
+        return;
+      }
+      router.push(next);
+      router.refresh();
+    } catch {
+      setError("حدث خطأ، حاول مرة أخرى");
+      setLoading(false);
+    }
+  };
+
+  const sendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     if (!isLive) {
-      // Demo mode: no backend configured — skip real auth.
       document.cookie = "ante_admin_session=1; path=/; max-age=86400";
       window.location.href = next;
       return;
@@ -46,7 +90,7 @@ function LoginForm() {
       }
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        setError("تعذر إرسال رابط الدخول، حاول مرة أخرى");
+        setError("تعذر إرسال رمز الدخول، حاول مرة أخرى");
         setLoading(false);
         return;
       }
@@ -100,17 +144,69 @@ function LoginForm() {
 
         {!isLive && (
           <div className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-center text-[11px] text-amber-800">
-            وضع تجريبي (بدون اتصال بقاعدة البيانات) — أدخل أي بريد واضغط "دخول"
+            وضع تجريبي (بدون اتصال بقاعدة البيانات) — أدخل أي بيانات واضغط "دخول"
           </div>
         )}
 
-        {linkFailed && (
-          <div className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-center text-[11px] text-red-700">
-            انتهت صلاحية رابط الدخول أو لم يكتمل — أرسل رابطاً جديداً من جديد.
+        {isLive && (
+          <div className="mb-5 grid grid-cols-2 overflow-hidden rounded-xl border border-ink-200 bg-white text-sm font-bold">
+            <button
+              onClick={() => {
+                setMode("password");
+                setError("");
+              }}
+              className={cn(
+                "py-2.5 transition",
+                mode === "password"
+                  ? "bg-primary-700 text-white"
+                  : "text-ink-500 hover:bg-ink-50",
+              )}
+            >
+              كلمة المرور
+            </button>
+            <button
+              onClick={() => {
+                setMode("code");
+                setError("");
+              }}
+              className={cn(
+                "py-2.5 transition",
+                mode === "code"
+                  ? "bg-primary-700 text-white"
+                  : "text-ink-500 hover:bg-ink-50",
+              )}
+            >
+              رمز من البريد
+            </button>
           </div>
         )}
 
-        {sent ? (
+        {mode === "password" ? (
+          <form onSubmit={loginWithPassword} className="space-y-4">
+            <Input
+              label="البريد الإلكتروني"
+              type="email"
+              dir="ltr"
+              placeholder="admin@ante.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              label="كلمة المرور"
+              type="password"
+              dir="ltr"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {error && <p className="text-xs font-bold text-red-600">{error}</p>}
+            <Button type="submit" className="w-full" loading={loading}>
+              دخول
+            </Button>
+          </form>
+        ) : sent ? (
           <div className="text-center">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100 text-2xl">
               ✉️
@@ -121,7 +217,8 @@ function LoginForm() {
             <p className="mt-1 text-xs leading-5 text-ink-500">
               ستجد في البريد <b>رمزاً من 6 أرقام</b> — أدخله هنا للدخول مباشرة.
               <br />
-              (إن لم يصلك البريد، افحص مجلد الرسائل غير المرغوب فيها)
+              (إن لم يصلك البريد، استخدم هاتفك في تسجيل الدخول بالبريد أو جرب
+              كلمة المرور)
             </p>
 
             <form onSubmit={verifyByCode} className="mt-4 space-y-3">
@@ -154,7 +251,7 @@ function LoginForm() {
             </div>
           </div>
         ) : (
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={sendCode} className="space-y-4">
             <Input
               label="البريد الإلكتروني"
               type="email"
@@ -165,7 +262,7 @@ function LoginForm() {
               required
             />
             <p className="text-[11px] leading-5 text-ink-400">
-              سنرسل لك رمز مكوّناً من 6 أرقام على بريدك — لا حاجة لكلمة مرور.
+              سنرسل لك رمزاً مكوّناً من 6 أرقام على بريدك — لا حاجة لكلمة مرور.
             </p>
             {error && <p className="text-xs font-bold text-red-600">{error}</p>}
             <Button type="submit" className="w-full" loading={loading}>
