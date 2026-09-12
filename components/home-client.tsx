@@ -29,11 +29,13 @@ export function HomeClient() {
     (async () => {
       const [prods, setting, galleryRows] = await Promise.all([
         fetchProducts(),
-        fetchSetting("whatsapp_number"),
+        fetchSetting("store"),
         fetchGalleryImages(),
       ]);
       setProducts(prods);
-      setWhatsapp(setting?.whatsapp as string | undefined);
+      setWhatsapp(
+        (setting as { whatsapp_number?: string } | null)?.whatsapp_number,
+      );
       setGallery(
         galleryRows
           .filter((g) => g.active)

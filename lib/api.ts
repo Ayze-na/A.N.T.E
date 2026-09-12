@@ -96,6 +96,7 @@ export async function fetchPaymentMethods(): Promise<PaymentMethodRow[]> {
 
 export async function fetchSetting(key: string): Promise<Record<string, unknown> | null> {
   if (!hasSupabase()) {
+    if (key === "store") return { whatsapp_number: SEED_PAYMENT_METHODS[0].phone_number };
     if (key === "whatsapp_number") return { value: SEED_PAYMENT_METHODS[0].phone_number };
     return null;
   }

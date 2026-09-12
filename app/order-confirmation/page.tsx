@@ -13,8 +13,8 @@ function ConfirmationInner() {
   const [whatsapp, setWhatsapp] = useState<string>();
 
   useEffect(() => {
-    fetchSetting("whatsapp_number").then((s) =>
-      setWhatsapp(s?.whatsapp as string | undefined),
+    fetchSetting("store").then((s) =>
+      setWhatsapp((s as { whatsapp_number?: string } | null)?.whatsapp_number),
     );
   }, []);
 

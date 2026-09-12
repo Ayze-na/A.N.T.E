@@ -31,6 +31,8 @@ export function ProductDetailClient({
     product.colors.length === 1 ? product.colors[0] : null,
   );
   const [quantity, setQuantity] = useState(1);
+  const [multiMode, setMultiMode] = useState(false);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [customization, setCustomization] = useState<CustomizationState | null>(null);
   const [customizeOpen, setCustomizeOpen] = useState(false);
 
@@ -43,6 +45,34 @@ export function ProductDetailClient({
 
   const addToCart = () => {
     if (!product) return;
+
+    if (multiMode) {
+      const picks = product.sizes.filter((s) => (counts[s] ?? 0) > 0);
+      if (picks.length === 0) {
+        toast("حدد عدداً لمقاس واحد على الأقل", "error");
+        return;
+      }
+      picks.forEach((s) =>
+        addItem({
+          productId: product.id,
+          name: product.name,
+          image_url: product.image_urls[0] ?? "",
+          size: s,
+          color: color ?? "",
+          quantity: counts[s],
+          unit_price: price,
+          customization: customization ?? undefined,
+        }),
+      );
+      setCounts({});
+      toast(
+        picks.length === 1
+          ? "تمت إضافة المنتج إلى السلة 🛒"
+          : `تمت إضافة ${picks.length} مقاسات إلى السلة 🛒`,
+      );
+      return;
+    }
+
     if (!size) {
       toast("من فضلك اختار المقاس أولاً", "error");
       return;
@@ -174,49 +204,128 @@ export function ProductDetailClient({
 
               {/* Sizes */}
               <div>
-                <p className="mb-2 text-sm font-bold text-ink-700">المقاس</p>
-                <div className="flex flex-wrap gap-2">
-                  {product.sizes.length === 0 ? (
-                    <span className="text-sm text-ink-400">مقاس واحد</span>
-                  ) : (
-                    product.sizes.map((s) => (
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold text-ink-700">المقاس</p>
+                  {product.sizes.length > 1 && (
+                    <div className="flex overflow-hidden rounded-lg border border-ink-200 text-xs font-bold">
                       <button
-                        key={s}
-                        onClick={() => setSize(s)}
+                        onClick={() => setMultiMode(false)}
                         className={cn(
-                          "h-11 min-w-12 rounded-xl border px-3 text-sm font-black transition",
-                          size === s
-                            ? "border-primary-600 bg-primary-700 text-white"
-                            : "border-ink-200 bg-[#F2F1F7] text-ink-700 hover:border-primary-300",
+                          "px-3 py-1.5 transition",
+                          !multiMode
+                            ? "bg-primary-700 text-white"
+                            : "bg-[#F2F1F7] text-ink-500",
                         )}
                       >
-                        {s}
+                        واحد
                       </button>
-                    ))
+                      <button
+                        onClick={() => setMultiMode(true)}
+                        className={cn(
+                          "px-3 py-1.5 transition",
+                          multiMode
+                            ? "bg-primary-700 text-white"
+                            : "bg-[#F2F1F7] text-ink-500",
+                        )}
+                      >
+                        متعدد
+                      </button>
+                    </div>
                   )}
                 </div>
+
+                {multiMode ? (
+                  <div className="space-y-2">
+                    {product.sizes.length === 0 ? (
+                      <span className="text-sm text-ink-400">مقاس واحد</span>
+                    ) : (
+                      product.sizes.map((s) => (
+                        <div
+                          key={s}
+                          className="flex items-center justify-between gap-3 rounded-xl border border-ink-200 bg-[#F2F1F7] px-3 py-1.5"
+                        >
+                          <span className="text-sm font-black text-ink-700">{s}</span>
+                          <div className="inline-flex items-center rounded-lg border border-ink-200 bg-white">
+                            <button
+                              className="h-8 w-8 font-black text-primary-700 disabled:opacity-30"
+                              onClick={() =>
+                                setCounts((c) => ({
+                                  ...c,
+                                  [s]: Math.max(0, (c[s] ?? 0) - 1),
+                                }))
+                              }
+                              disabled={(counts[s] ?? 0) <= 0}
+                            >
+                              −
+                            </button>
+                            <span className="w-8 text-center text-sm font-black">
+                              {counts[s] ?? 0}
+                            </span>
+                            <button
+                              className="h-8 w-8 font-black text-primary-700"
+                              onClick={() =>
+                                setCounts((c) => ({ ...c, [s]: (c[s] ?? 0) + 1 }))
+                              }
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    {product.sizes.length > 0 && (
+                      <p className="text-[11px] leading-5 text-ink-400">
+                        حدد عدداً لكل مقاس — ستُضاف كل مجموعة إلى السلة بمقاسها
+                        الخاص.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {product.sizes.length === 0 ? (
+                      <span className="text-sm text-ink-400">مقاس واحد</span>
+                    ) : (
+                      product.sizes.map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setSize(s)}
+                          className={cn(
+                            "h-11 min-w-12 rounded-xl border px-3 text-sm font-black transition",
+                            size === s
+                              ? "border-primary-600 bg-primary-700 text-white"
+                              : "border-ink-200 bg-[#F2F1F7] text-ink-700 hover:border-primary-300",
+                          )}
+                        >
+                          {s}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Quantity */}
-              <div>
-                <p className="mb-2 text-sm font-bold text-ink-700">الكمية</p>
-                <div className="inline-flex items-center rounded-xl border border-ink-200">
-                  <button
-                    className="h-11 w-11 text-lg font-black text-primary-700 disabled:opacity-30"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    disabled={quantity <= 1}
-                  >
-                    −
-                  </button>
-                  <span className="w-12 text-center text-lg font-black">{quantity}</span>
-                  <button
-                    className="h-11 w-11 text-lg font-black text-primary-700"
-                    onClick={() => setQuantity((q) => Math.min(99, q + 1))}
-                  >
-                    +
-                  </button>
+              {!multiMode && (
+                <div>
+                  <p className="mb-2 text-sm font-bold text-ink-700">الكمية</p>
+                  <div className="inline-flex items-center rounded-xl border border-ink-200">
+                    <button
+                      className="h-11 w-11 text-lg font-black text-primary-700 disabled:opacity-30"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                    >
+                      −
+                    </button>
+                    <span className="w-12 text-center text-lg font-black">{quantity}</span>
+                    <button
+                      className="h-11 w-11 text-lg font-black text-primary-700"
+                      onClick={() => setQuantity((q) => Math.min(99, q + 1))}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Customization */}
               {product.customization_enabled && (
