@@ -86,8 +86,8 @@ function LoginForm() {
               تم إرسال رابط الدخول
             </p>
             <p className="mt-1 text-xs leading-5 text-ink-500">
-              اذهب إلى <b dir="ltr">a.n.t.e162003@gmail.com</b> واضغط على الرابط
-              داخل رسالة <b>Supabase Auth</b> للدخول.
+              اذهب إلى بريدك الإلكتروني واضغط على رابط الدخول المرسل
+              داخل رسالة <b>Supabase Auth</b>.
             </p>
             <button
               onClick={() => setSent(false)}

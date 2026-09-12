@@ -10,6 +10,7 @@ const NAV = [
   { href: "/admin/products", label: "المنتجات", icon: "M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" },
   { href: "/admin/gallery", label: "معرض الصور", icon: "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm6.5 3.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM6 17l3.5-4.5 3 3.5L16 12l4.5 5.5z" },
   { href: "/admin/payments", label: "وسائل الدفع", icon: "M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2zm3 4h2a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2zm5 0h2a1 1 0 0 1 0 2h-2a1 1 0 0 1 0-2zm6 0h3v2h-3z" },
+  { href: "/admin/size-guide", label: "دليل المقاسات", icon: "M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z" },
 ];
 
 export function AdminShell({ children, title }: { children: React.ReactNode; title: string }) {

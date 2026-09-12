@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentMethod, ProductType } from "@/lib/database.types";
+import type { OrderStatus, PaymentMethod, ProductType, SizeGuideRow } from "@/lib/database.types";
 
 export const PRODUCT_TYPES: Record<ProductType, { label: string; fabric: string; colors: string[] }> = {
   "scrub-half": {
@@ -81,3 +81,15 @@ export const ORDER_STATUS_STYLES: Record<OrderStatus, string> = {
   delivered: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
 };
+
+export const SIZE_GUIDE_SETTING_KEY = "size_guide";
+
+export const DEFAULT_SIZE_GUIDE_ROWS: SizeGuideRow[] = [
+  { weight: "40 - 50", size: "S" },
+  { weight: "50 - 60", size: "M" },
+  { weight: "60 - 70", size: "L" },
+  { weight: "70 - 80", size: "XL" },
+  { weight: "80 - 90", size: "2XL" },
+  { weight: "90 - 100", size: "3XL" },
+  { weight: "100 - 110", size: "4XL" },
+];

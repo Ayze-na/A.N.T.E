@@ -265,3 +265,8 @@ export type CartItem = {
     name_tag_text: string;
   };
 };
+
+export type SizeGuideRow = {
+  weight: string;
+  size: string;
+};

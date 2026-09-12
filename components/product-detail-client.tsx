@@ -14,9 +14,16 @@ import {
 } from "@/components/customization-modal";
 import { PRODUCT_TYPES } from "@/lib/constants";
 import { cn, discountRatio, formatPrice } from "@/lib/utils";
-import type { Product } from "@/lib/database.types";
+import type { Product, SizeGuideRow } from "@/lib/database.types";
+import { SizeGuideTable } from "@/components/size-guide-table";
 
-export function ProductDetailClient({ product }: { product: Product }) {
+export function ProductDetailClient({
+  product,
+  sizeGuideRows,
+}: {
+  product: Product;
+  sizeGuideRows: SizeGuideRow[];
+}) {
   const [imageIndex, setImageIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [size, setSize] = useState<string | null>(null);
@@ -253,6 +260,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
             </div>
           </div>
         </div>
+
+        <SizeGuideTable rows={sizeGuideRows} />
       </main>
 
       <CustomizationModal

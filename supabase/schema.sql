@@ -112,6 +112,11 @@ create table if not exists public.gallery_images (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.admin_emails (
+  email text primary key,
+  updated_at timestamptz not null default now()
+);
+
 -- ---------- Defaults ----------
 insert into public.products (name, slug, type, fabric, description, colors, sizes, image_urls, price, customization_enabled)
 values
@@ -140,45 +145,67 @@ alter table public.order_items enable row level security;
 alter table public.payment_methods enable row level security;
 alter table public.settings enable row level security;
 
+-- Admin allowlist: the ONLY principal granted admin writes. Populated at
+-- runtime by POST /api/auth/send-otp (service role) from the server-only
+-- ADMIN_EMAIL env var — no email literal lives in this repo. No public /
+-- authenticated access (RLS on, no policies).
+alter table public.admin_emails enable row level security;
+revoke all on public.admin_emails from anon, authenticated;
+
+-- RLS helper: true iff the session JWT email is allowlisted.
+-- SECURITY DEFINER so it can read admin_emails despite RLS being enabled.
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.admin_emails
+    where email = coalesce(auth.jwt() ->> 'email', '')
+  )
+$$;
+
 -- Products: everyone can read (storefront shows live data), admin writes.
 create policy "products_read_all" on public.products for select using (true);
-create policy "products_admin_insert" on public.products for insert with check (auth.role() = 'authenticated');
-create policy "products_admin_update" on public.products for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "products_admin_delete" on public.products for delete using (auth.role() = 'authenticated');
+create policy "products_admin_insert" on public.products for insert with check (public.is_admin());
+create policy "products_admin_update" on public.products for update using (public.is_admin()) with check (public.is_admin());
+create policy "products_admin_delete" on public.products for delete using (public.is_admin());
 
 -- Preset logos: everyone can read active ones, admin manages.
 create policy "preset_logos_read_all" on public.preset_logos for select using (true);
-create policy "preset_logos_admin_insert" on public.preset_logos for insert with check (auth.role() = 'authenticated');
-create policy "preset_logos_admin_update" on public.preset_logos for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "preset_logos_admin_delete" on public.preset_logos for delete using (auth.role() = 'authenticated');
+create policy "preset_logos_admin_insert" on public.preset_logos for insert with check (public.is_admin());
+create policy "preset_logos_admin_update" on public.preset_logos for update using (public.is_admin()) with check (public.is_admin());
+create policy "preset_logos_admin_delete" on public.preset_logos for delete using (public.is_admin());
 
 -- Orders / order_items:
 --   Orders are created through the server route (POST /api/orders) using the
 --   service-role key, so no guest INSERTS policies are defined.
 --   Only authenticated admin can read / update / delete.
-create policy "orders_admin_read" on public.orders for select using (auth.role() = 'authenticated');
-create policy "orders_admin_update" on public.orders for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "orders_admin_delete" on public.orders for delete using (auth.role() = 'authenticated');
-create policy "order_items_admin_read" on public.order_items for select using (auth.role() = 'authenticated');
-create policy "order_items_admin_update" on public.order_items for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "order_items_admin_delete" on public.order_items for delete using (auth.role() = 'authenticated');
+create policy "orders_admin_read" on public.orders for select using (public.is_admin());
+create policy "orders_admin_update" on public.orders for update using (public.is_admin()) with check (public.is_admin());
+create policy "orders_admin_delete" on public.orders for delete using (public.is_admin());
+create policy "order_items_admin_read" on public.order_items for select using (public.is_admin());
+create policy "order_items_admin_update" on public.order_items for update using (public.is_admin()) with check (public.is_admin());
+create policy "order_items_admin_delete" on public.order_items for delete using (public.is_admin());
 
 -- Payment methods: public needs to see phone numbers at checkout.
 create policy "payment_methods_read_all" on public.payment_methods for select using (true);
-create policy "payment_methods_admin_insert" on public.payment_methods for insert with check (auth.role() = 'authenticated');
-create policy "payment_methods_admin_update" on public.payment_methods for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "payment_methods_admin_delete" on public.payment_methods for delete using (auth.role() = 'authenticated');
+create policy "payment_methods_admin_insert" on public.payment_methods for insert with check (public.is_admin());
+create policy "payment_methods_admin_update" on public.payment_methods for update using (public.is_admin()) with check (public.is_admin());
+create policy "payment_methods_admin_delete" on public.payment_methods for delete using (public.is_admin());
 
 -- Settings: read for all (used for store config), write admin only.
 create policy "settings_read_all" on public.settings for select using (true);
-create policy "settings_admin_insert" on public.settings for insert with check (auth.role() = 'authenticated');
-create policy "settings_admin_update" on public.settings for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "settings_admin_insert" on public.settings for insert with check (public.is_admin());
+create policy "settings_admin_update" on public.settings for update using (public.is_admin()) with check (public.is_admin());
 
 -- Gallery: everyone reads the homepage showcase, admin manages it.
 create policy "gallery_read_all" on public.gallery_images for select using (true);
-create policy "gallery_admin_insert" on public.gallery_images for insert with check (auth.role() = 'authenticated');
-create policy "gallery_admin_update" on public.gallery_images for update using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "gallery_admin_delete" on public.gallery_images for delete using (auth.role() = 'authenticated');
+create policy "gallery_admin_insert" on public.gallery_images for insert with check (public.is_admin());
+create policy "gallery_admin_update" on public.gallery_images for update using (public.is_admin()) with check (public.is_admin());
+create policy "gallery_admin_delete" on public.gallery_images for delete using (public.is_admin());
 
 -- ---------- Storage buckets ----------
 insert into storage.buckets (id, name, public) values
@@ -197,21 +224,21 @@ create policy "preset_logos_public_read" on storage.objects for select using (bu
 -- uploaded-logos + payment-proofs are PRIVATE (guest UGC): no public read or
 -- insert. Files are only written by the server-side order route (service
 -- role) and read by admins through short-lived signed URLs.
-create policy "uploaded_logos_admin_read" on storage.objects for select using (bucket_id = 'uploaded-logos' and auth.role() = 'authenticated');
-create policy "payment_proofs_admin_read" on storage.objects for select using (bucket_id = 'payment-proofs' and auth.role() = 'authenticated');
+create policy "uploaded_logos_admin_read" on storage.objects for select using (bucket_id = 'uploaded-logos' and public.is_admin());
+create policy "payment_proofs_admin_read" on storage.objects for select using (bucket_id = 'payment-proofs' and public.is_admin());
 
 -- Authenticated admin manages product-images / preset-logos
-create policy "product_images_admin_upload" on storage.objects for insert with check (bucket_id = 'product-images' and auth.role() = 'authenticated');
-create policy "product_images_admin_update" on storage.objects for update using (bucket_id = 'product-images' and auth.role() = 'authenticated') with check (bucket_id = 'product-images');
-create policy "product_images_admin_delete" on storage.objects for delete using (bucket_id = 'product-images' and auth.role() = 'authenticated');
-create policy "preset_logos_admin_upload" on storage.objects for insert with check (bucket_id = 'preset-logos' and auth.role() = 'authenticated');
-create policy "preset_logos_admin_update" on storage.objects for update using (bucket_id = 'preset-logos' and auth.role() = 'authenticated') with check (bucket_id = 'preset-logos');
-create policy "preset_logos_admin_delete" on storage.objects for delete using (bucket_id = 'preset-logos' and auth.role() = 'authenticated');
+create policy "product_images_admin_upload" on storage.objects for insert with check (bucket_id = 'product-images' and public.is_admin());
+create policy "product_images_admin_update" on storage.objects for update using (bucket_id = 'product-images' and public.is_admin()) with check (bucket_id = 'product-images');
+create policy "product_images_admin_delete" on storage.objects for delete using (bucket_id = 'product-images' and public.is_admin());
+create policy "preset_logos_admin_upload" on storage.objects for insert with check (bucket_id = 'preset-logos' and public.is_admin());
+create policy "preset_logos_admin_update" on storage.objects for update using (bucket_id = 'preset-logos' and public.is_admin()) with check (bucket_id = 'preset-logos');
+create policy "preset_logos_admin_delete" on storage.objects for delete using (bucket_id = 'preset-logos' and public.is_admin());
 
 -- Authenticated admin manages gallery-images
-create policy "gallery_images_admin_upload" on storage.objects for insert with check (bucket_id = 'gallery-images' and auth.role() = 'authenticated');
-create policy "gallery_images_admin_update" on storage.objects for update using (bucket_id = 'gallery-images' and auth.role() = 'authenticated') with check (bucket_id = 'gallery-images');
-create policy "gallery_images_admin_delete" on storage.objects for delete using (bucket_id = 'gallery-images' and auth.role() = 'authenticated');
+create policy "gallery_images_admin_upload" on storage.objects for insert with check (bucket_id = 'gallery-images' and public.is_admin());
+create policy "gallery_images_admin_update" on storage.objects for update using (bucket_id = 'gallery-images' and public.is_admin()) with check (bucket_id = 'gallery-images');
+create policy "gallery_images_admin_delete" on storage.objects for delete using (bucket_id = 'gallery-images' and public.is_admin());
 
 -- Payment proofs: admin-only read (signed URLs). Write happens server-side
 -- via the service-role key, so no storage insert policy is required for the
@@ -222,26 +249,10 @@ create policy "gallery_images_admin_delete" on storage.objects for delete using 
 -- insert orders/items directly. All writes are admin/session-gated except
 -- the read of product catalog etc.
 
--- ---------- Admin auth (passwordless via Resend email links) ----------
--- Requires: "Allow new users to sign up" = OFF, Resend configured in
--- Authentication > Messaging, and this email pre-created via the OTP endpoint.
-insert into auth.users
-  (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-   raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
-   confirmation_token, recovery_token, email_change_token_new)
-select
-  '00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated',
-  'authenticated', 'a.n.t.e162003@gmail.com', '', now(),
-  '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now(),
-  '', '', ''
-where not exists (select 1 from auth.users where email = 'a.n.t.e162003@gmail.com');
-
-insert into auth.identities
-  (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
-select
-  gen_random_uuid(), u.id, u.email,
-  jsonb_build_object('sub', u.id::text, 'email', u.email),
-  'email', now(), now(), now()
-from auth.users u
-where u.email = 'a.n.t.e162003@gmail.com'
-  and not exists (select 1 from auth.identities i where i.user_id = u.id);
+-- ---------- Admin session gate ----------
+-- The admin identity is NOT stored in this repo. At runtime,
+-- POST /api/auth/send-otp upserts the ADMIN_EMAIL into public.admin_emails
+-- (service role) and provisions the passwordless auth.user on demand. RLS
+-- treats anyone whose JWT email is allowlisted as admin (public.is_admin()).
+-- Admin-only reads of inactive preset logos:
+create policy "preset_logos_read_inactive_admin" on public.preset_logos for select using (public.is_admin());

@@ -1,0 +1,18 @@
+{
+  "name": "A.N.T.E — ملابس طبية",
+  "short_name": "A.N.T.E",
+  "description": "اسكرابس وبالطو طبي مع تخصيص بالشعار والاسم. متجر A.N.T.E.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F1F7",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

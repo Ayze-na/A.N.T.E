@@ -15,7 +15,9 @@ import type {
   ProductType,
   GalleryImage,
   GalleryOrientation,
+  SizeGuideRow,
 } from "@/lib/database.types";
+import { SIZE_GUIDE_SETTING_KEY } from "@/lib/constants";
 
 export function hasSupabase() {
   return Boolean(
@@ -257,6 +259,16 @@ export async function saveStoreSettings(settings: StoreSettings): Promise<boolea
   const { error } = await supabase.from("settings").upsert({
     key: "store",
     value: settings as never,
+  });
+  return !error;
+}
+
+export async function saveSizeGuideRows(rows: SizeGuideRow[]): Promise<boolean> {
+  if (!hasSupabase()) return true;
+  const supabase = createClient();
+  const { error } = await supabase.from("settings").upsert({
+    key: SIZE_GUIDE_SETTING_KEY,
+    value: { rows } as never,
   });
   return !error;
 }
