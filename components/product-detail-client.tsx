@@ -32,11 +32,21 @@ export function ProductDetailClient({
   );
   const [quantity, setQuantity] = useState(1);
   const [multiMode, setMultiMode] = useState(false);
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [multiCustomizations, setMultiCustomizations] = useState<
-    Record<string, CustomizationState | null>
-  >({});
-  const [rowColors, setRowColors] = useState<Record<string, string>>({});
+  type MultiLine = {
+    id: string;
+    size: string | null;
+    color: string;
+    quantity: number;
+    customization: CustomizationState | null;
+  };
+  const newLine = (): MultiLine => ({
+    id: `l${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-5)}`,
+    size: null,
+    color: product.colors[0] ?? "",
+    quantity: 1,
+    customization: null,
+  });
+  const [lines, setLines] = useState<MultiLine[]>([]);
   const [customization, setCustomization] = useState<CustomizationState | null>(null);
   const [customizeTarget, setCustomizeTarget] = useState<string | null>(null);
 
@@ -51,30 +61,29 @@ export function ProductDetailClient({
     if (!product) return;
 
     if (multiMode) {
-      const picks = product.sizes.filter((s) => (counts[s] ?? 0) > 0);
-      if (picks.length === 0) {
-        toast("حدد عدداً لمقاس واحد على الأقل", "error");
+      const valid = lines.filter((l) => l.size);
+      if (valid.length === 0) {
+        toast("اختر مقاساً ولوناً لقطعة واحدة على الأقل", "error");
         return;
       }
-      picks.forEach((s) =>
+      valid.forEach((l) =>
         addItem({
           productId: product.id,
           name: product.name,
           image_url: product.image_urls[0] ?? "",
-          size: s,
-          color: rowColors[s] ?? color ?? "",
-          quantity: counts[s],
+          size: l.size!,
+          color: l.color,
+          quantity: l.quantity,
           unit_price: price,
-          customization: multiCustomizations[s] ?? undefined,
+          customization: l.customization ?? undefined,
         }),
       );
-      setCounts({});
-      setMultiCustomizations({});
-      setRowColors({});
+      const totalUnits = valid.reduce((n, l) => n + l.quantity, 0);
+      setLines([newLine()]);
       toast(
-        picks.length === 1
-          ? "تمت إضافة المنتج إلى السلة 🛒"
-          : `تمت إضافة ${picks.length} مقاسات إلى السلة 🛒`,
+        totalUnits === 1
+          ? "تمت إضافة القطعة إلى السلة 🛒"
+          : `تمت إضافة ${totalUnits} قطع إلى السلة 🛒`,
       );
       return;
     }
@@ -226,7 +235,10 @@ export function ProductDetailClient({
                         واحد
                       </button>
                       <button
-                        onClick={() => setMultiMode(true)}
+                        onClick={() => {
+                          setMultiMode(true);
+                          setLines((ls) => (ls.length === 0 ? [newLine()] : ls));
+                        }}
                         className={cn(
                           "px-3 py-1.5 transition",
                           multiMode
@@ -242,85 +254,141 @@ export function ProductDetailClient({
 
                 {multiMode ? (
                   <div className="space-y-2">
-                    {product.sizes.length === 0 ? (
-                      <span className="text-sm text-ink-400">مقاس واحد</span>
-                    ) : (
-                      product.sizes.map((s) => (
+                    {lines.map((line, idx) => (
                         <div
-                          key={s}
+                          key={line.id}
                           className="rounded-xl border border-ink-200 bg-[#F2F1F7] px-3 py-2"
                         >
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="text-sm font-black text-ink-700">{s}</span>
-                            {product.colors.length > 1 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-ink-400">
+                              قطعة {idx + 1}
+                            </span>
+                            <button
+                              onClick={() =>
+                                setLines((ls) => ls.filter((l) => l.id !== line.id))
+                              }
+                              className="mr-auto rounded-md px-1.5 py-0.5 text-xs font-bold text-red-500 hover:bg-red-50"
+                              title="حذف هذه القطعة"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          <div className="mt-1 grid grid-cols-2 gap-2">
+                            <select
+                              value={line.size ?? ""}
+                              onChange={(e) =>
+                                setLines((ls) =>
+                                  ls.map((l) =>
+                                    l.id === line.id
+                                      ? { ...l, size: e.target.value || null }
+                                      : l,
+                                  ),
+                                )
+                              }
+                              className="h-9 rounded-lg border border-ink-200 bg-white px-2 text-xs font-bold text-ink-700"
+                            >
+                              <option value="" disabled>
+                                المقاس
+                              </option>
+                              {product.sizes.map((s) => (
+                                <option key={s} value={s}>
+                                  {s}
+                                </option>
+                              ))}
+                            </select>
+                            {product.colors.length > 1 ? (
                               <select
-                                value={rowColors[s] ?? color ?? product.colors[0] ?? ""}
+                                value={line.color}
                                 onChange={(e) =>
-                                  setRowColors((m) => ({ ...m, [s]: e.target.value }))
+                                  setLines((ls) =>
+                                    ls.map((l) =>
+                                      l.id === line.id
+                                        ? { ...l, color: e.target.value }
+                                        : l,
+                                    ),
+                                  )
                                 }
-                                className="h-8 max-w-[100px] rounded-lg border border-ink-200 bg-white px-2 text-[11px] font-bold text-ink-700"
+                                className={cn(
+                                  "h-9 rounded-lg border border-ink-200 bg-white px-2 text-xs font-bold",
+                                  line.color ? "text-ink-700" : "text-ink-400",
+                                )}
                               >
+                                <option value="" disabled>
+                                  اللون
+                                </option>
                                 {product.colors.map((c) => (
-                                  <option key={c} value={c}>{c}</option>
+                                  <option key={c} value={c}>
+                                    {c}
+                                  </option>
                                 ))}
                               </select>
-                            )}
+                            ) : null}
+                          </div>
+                          <div className="mt-2 flex items-center justify-between gap-2">
                             <div className="inline-flex items-center rounded-lg border border-ink-200 bg-white">
                               <button
                                 className="h-8 w-8 font-black text-primary-700 disabled:opacity-30"
                                 onClick={() =>
-                                  setCounts((c) => ({
-                                    ...c,
-                                    [s]: Math.max(0, (c[s] ?? 0) - 1),
-                                  }))
+                                  setLines((ls) =>
+                                    ls.map((l) =>
+                                      l.id === line.id
+                                        ? { ...l, quantity: Math.max(1, l.quantity - 1) }
+                                        : l,
+                                    ),
+                                  )
                                 }
-                                disabled={(counts[s] ?? 0) <= 0}
+                                disabled={line.quantity <= 1}
                               >
                                 −
                               </button>
-                              <span className="w-8 text-center text-sm font-black">
-                                {counts[s] ?? 0}
+                              <span className="w-7 text-center text-sm font-black">
+                                {line.quantity}
                               </span>
                               <button
                                 className="h-8 w-8 font-black text-primary-700"
                                 onClick={() =>
-                                  setCounts((c) => ({ ...c, [s]: (c[s] ?? 0) + 1 }))
+                                  setLines((ls) =>
+                                    ls.map((l) =>
+                                      l.id === line.id
+                                        ? { ...l, quantity: Math.min(99, l.quantity + 1) }
+                                        : l,
+                                    ),
+                                  )
                                 }
                               >
                                 +
                               </button>
                             </div>
+                            {product.customization_enabled && (
+                              <button
+                                onClick={() => setCustomizeTarget(line.id)}
+                                className={cn(
+                                  "h-8 rounded-lg border px-2.5 text-[11px] font-bold transition",
+                                  line.customization
+                                    ? "border-primary-300 bg-primary-50 text-primary-800"
+                                    : "border-dashed border-ink-300 bg-white text-ink-500 hover:border-primary-400 hover:text-primary-700",
+                                )}
+                              >
+                                {line.customization
+                                  ? `✓ ${line.customization.name_tag_text || "شعار"}`
+                                  : "+ تخصيص"}
+                              </button>
+                            )}
                           </div>
-                          {product.customization_enabled && (
-                            <button
-                              onClick={() => setCustomizeTarget(s)}
-                              className={cn(
-                                "mt-2 flex w-full items-center justify-between rounded-lg border px-3 py-1.5 text-xs font-bold transition",
-                                multiCustomizations[s]
-                                  ? "border-primary-300 bg-primary-50 text-primary-800"
-                                  : "border-dashed border-ink-300 bg-white text-ink-500 hover:border-primary-400 hover:text-primary-700",
-                              )}
-                            >
-                              <span>
-                                {multiCustomizations[s]
-                                  ? "✓ مخصّص — تعديل"
-                                  : "+ تخصيص هذا المقاس"}
-                              </span>
-                              <span className="text-[10px] text-ink-400">
-                                {multiCustomizations[s]
-                                  ? multiCustomizations[s]!.name_tag_text || "شعار"
-                                  : "شعار واسم لكل قطعة"}
-                              </span>
-                            </button>
+                          {!line.color && product.colors.length > 1 && (
+                            <p className="mt-1 text-[10px] text-red-500">
+                              اختر لون هذه القطعة
+                            </p>
                           )}
                         </div>
-                      ))
-                    )}
+                      ))}
                     {product.sizes.length > 0 && (
-                      <p className="text-[11px] leading-5 text-ink-400">
-                        حدد عدداً لكل مقاس — ستُضاف كل مجموعة بمقاسها الخاص عن
-                        القطعة لوحدها، ولكل مقاس تخصيص مستقل.
-                      </p>
+                      <button
+                        onClick={() => setLines((ls) => [...ls, newLine()])}
+                        className="w-full rounded-xl border border-dashed border-primary-300 py-2 text-xs font-black text-primary-700 transition hover:bg-primary-50"
+                      >
+                        + إضافة قطعة أخرى
+                      </button>
                     )}
                   </div>
                 ) : (
@@ -423,12 +491,16 @@ export function ProductDetailClient({
           customizeTarget === "main"
             ? customization
             : customizeTarget
-              ? (multiCustomizations[customizeTarget] ?? null)
+              ? (lines.find((l) => l.id === customizeTarget)?.customization ?? null)
               : null
         }
         onSave={(c) => {
           if (customizeTarget && customizeTarget !== "main") {
-            setMultiCustomizations((m) => ({ ...m, [customizeTarget]: c }));
+            setLines((ls) =>
+              ls.map((l) =>
+                l.id === customizeTarget ? { ...l, customization: c } : l,
+              ),
+            );
           } else {
             setCustomization(c);
           }
