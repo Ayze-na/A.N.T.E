@@ -804,9 +804,9 @@ function SettingsSection({ onToast }: { onToast: ReturnType<typeof useToast>["to
   const save = async () => {
     setSaving(true);
     const { saveStoreSettings } = await import("@/lib/admin");
-    await saveStoreSettings(form);
+    const ok = await saveStoreSettings(form);
     setSaving(false);
-    onToast("تم حفظ الإعدادات");
+    onToast(ok ? "تم حفظ الإعدادات" : "فشل حفظ الإعدادات", ok ? undefined : "error");
   };
 
   if (!loaded) return <div className="h-40 animate-pulse rounded-2xl bg-ink-100" />;

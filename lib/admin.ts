@@ -256,20 +256,20 @@ export async function fetchStoreSettings(): Promise<StoreSettings> {
 export async function saveStoreSettings(settings: StoreSettings): Promise<boolean> {
   if (!hasSupabase()) return true;
   const supabase = createClient();
-  const { error } = await supabase.from("settings").upsert({
-    key: "store",
-    value: settings as never,
-  });
+  const { error } = await supabase.from("settings").upsert(
+    { key: "store", value: settings as never },
+    { onConflict: "key" },
+  );
   return !error;
 }
 
 export async function saveSizeGuideRows(rows: SizeGuideRow[]): Promise<boolean> {
   if (!hasSupabase()) return true;
   const supabase = createClient();
-  const { error } = await supabase.from("settings").upsert({
-    key: SIZE_GUIDE_SETTING_KEY,
-    value: { rows } as never,
-  });
+  const { error } = await supabase.from("settings").upsert(
+    { key: SIZE_GUIDE_SETTING_KEY, value: { rows } as never },
+    { onConflict: "key" },
+  );
   return !error;
 }
 
