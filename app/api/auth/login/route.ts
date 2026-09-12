@@ -53,27 +53,12 @@ export async function POST(req: Request) {
 
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD;
-  const debug = JSON.stringify({
-    adminEmail: adminEmail ?? null,
-    hasPassword: Boolean(adminPassword),
-    pwdLen: adminPassword?.length ?? -1,
-    sentEmail: email,
-    sentPwdLen: password.length,
-    emailsMatch: email === adminEmail,
-  });
-  console.error("login env check " + debug);
   if (!adminEmail || !adminPassword) {
-    return NextResponse.json(
-      { ok: false, error: "بيانات الدخول غير صحيحة", debug },
-      { status: 401 },
-    );
+    return NextResponse.json({ ok: false, error: "بيانات الدخول غير صحيحة" }, { status: 401 });
   }
 
   if (email !== adminEmail || password !== adminPassword) {
-    return NextResponse.json(
-      { ok: false, error: "بيانات الدخول غير صحيحة", debug },
-      { status: 401 },
-    );
+    return NextResponse.json({ ok: false, error: "بيانات الدخول غير صحيحة" }, { status: 401 });
   }
 
   try {
