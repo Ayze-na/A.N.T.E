@@ -33,8 +33,11 @@ export function ProductDetailClient({
   const [quantity, setQuantity] = useState(1);
   const [multiMode, setMultiMode] = useState(false);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [multiCustomizations, setMultiCustomizations] = useState<
+    Record<string, CustomizationState | null>
+  >({});
   const [customization, setCustomization] = useState<CustomizationState | null>(null);
-  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [customizeTarget, setCustomizeTarget] = useState<string | null>(null);
 
   const addItem = useCartStore((s) => s.addItem);
   const { toast } = useToast();
@@ -61,10 +64,11 @@ export function ProductDetailClient({
           color: color ?? "",
           quantity: counts[s],
           unit_price: price,
-          customization: customization ?? undefined,
+          customization: multiCustomizations[s] ?? undefined,
         }),
       );
       setCounts({});
+      setMultiCustomizations({});
       toast(
         picks.length === 1
           ? "تمت إضافة المنتج إلى السلة 🛒"
@@ -242,41 +246,65 @@ export function ProductDetailClient({
                       product.sizes.map((s) => (
                         <div
                           key={s}
-                          className="flex items-center justify-between gap-3 rounded-xl border border-ink-200 bg-[#F2F1F7] px-3 py-1.5"
+                          className="rounded-xl border border-ink-200 bg-[#F2F1F7] px-3 py-2"
                         >
-                          <span className="text-sm font-black text-ink-700">{s}</span>
-                          <div className="inline-flex items-center rounded-lg border border-ink-200 bg-white">
-                            <button
-                              className="h-8 w-8 font-black text-primary-700 disabled:opacity-30"
-                              onClick={() =>
-                                setCounts((c) => ({
-                                  ...c,
-                                  [s]: Math.max(0, (c[s] ?? 0) - 1),
-                                }))
-                              }
-                              disabled={(counts[s] ?? 0) <= 0}
-                            >
-                              −
-                            </button>
-                            <span className="w-8 text-center text-sm font-black">
-                              {counts[s] ?? 0}
-                            </span>
-                            <button
-                              className="h-8 w-8 font-black text-primary-700"
-                              onClick={() =>
-                                setCounts((c) => ({ ...c, [s]: (c[s] ?? 0) + 1 }))
-                              }
-                            >
-                              +
-                            </button>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-black text-ink-700">{s}</span>
+                            <div className="inline-flex items-center rounded-lg border border-ink-200 bg-white">
+                              <button
+                                className="h-8 w-8 font-black text-primary-700 disabled:opacity-30"
+                                onClick={() =>
+                                  setCounts((c) => ({
+                                    ...c,
+                                    [s]: Math.max(0, (c[s] ?? 0) - 1),
+                                  }))
+                                }
+                                disabled={(counts[s] ?? 0) <= 0}
+                              >
+                                −
+                              </button>
+                              <span className="w-8 text-center text-sm font-black">
+                                {counts[s] ?? 0}
+                              </span>
+                              <button
+                                className="h-8 w-8 font-black text-primary-700"
+                                onClick={() =>
+                                  setCounts((c) => ({ ...c, [s]: (c[s] ?? 0) + 1 }))
+                                }
+                              >
+                                +
+                              </button>
+                            </div>
                           </div>
+                          {product.customization_enabled && (
+                            <button
+                              onClick={() => setCustomizeTarget(s)}
+                              className={cn(
+                                "mt-2 flex w-full items-center justify-between rounded-lg border px-3 py-1.5 text-xs font-bold transition",
+                                multiCustomizations[s]
+                                  ? "border-primary-300 bg-primary-50 text-primary-800"
+                                  : "border-dashed border-ink-300 bg-white text-ink-500 hover:border-primary-400 hover:text-primary-700",
+                              )}
+                            >
+                              <span>
+                                {multiCustomizations[s]
+                                  ? "✓ مخصّص — تعديل"
+                                  : "+ تخصيص هذا المقاس"}
+                              </span>
+                              <span className="text-[10px] text-ink-400">
+                                {multiCustomizations[s]
+                                  ? multiCustomizations[s]!.name_tag_text || "شعار"
+                                  : "شعار واسم لكل قطعة"}
+                              </span>
+                            </button>
+                          )}
                         </div>
                       ))
                     )}
                     {product.sizes.length > 0 && (
                       <p className="text-[11px] leading-5 text-ink-400">
-                        حدد عدداً لكل مقاس — ستُضاف كل مجموعة إلى السلة بمقاسها
-                        الخاص.
+                        حدد عدداً لكل مقاس — ستُضاف كل مجموعة بمقاسها الخاص عن
+                        القطعة لوحدها، ولكل مقاس تخصيص مستقل.
                       </p>
                     )}
                   </div>
@@ -328,7 +356,7 @@ export function ProductDetailClient({
               )}
 
               {/* Customization */}
-              {product.customization_enabled && (
+              {product.customization_enabled && !multiMode && (
                 <div className="rounded-2xl border border-primary-200 bg-primary-50 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -342,7 +370,7 @@ export function ProductDetailClient({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCustomizeOpen(true)}
+                      onClick={() => setCustomizeTarget("main")}
                       className="bg-[#F2F1F7]"
                     >
                       {customization ? "تعديل التخصيص" : "تخصيص"}
@@ -374,9 +402,22 @@ export function ProductDetailClient({
       </main>
 
       <CustomizationModal
-        open={customizeOpen}
-        onClose={() => setCustomizeOpen(false)}
-        onSave={(c) => setCustomization(c)}
+        open={customizeTarget !== null}
+        onClose={() => setCustomizeTarget(null)}
+        initial={
+          customizeTarget === "main"
+            ? customization
+            : customizeTarget
+              ? (multiCustomizations[customizeTarget] ?? null)
+              : null
+        }
+        onSave={(c) => {
+          if (customizeTarget && customizeTarget !== "main") {
+            setMultiCustomizations((m) => ({ ...m, [customizeTarget]: c }));
+          } else {
+            setCustomization(c);
+          }
+        }}
       />
 
       {/* Zoom lightbox */}

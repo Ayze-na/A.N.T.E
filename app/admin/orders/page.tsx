@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { fetchAdminOrders, updateOrderStatusDb, fetchAllPaymentMethods, resolveStorageSignedUrl } from "@/lib/admin";
+import { fetchPresetLogos } from "@/lib/api";
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_OPTIONS,
@@ -27,11 +28,15 @@ export default function AdminOrdersPage() {
   const [methodLabels, setMethodLabels] = useState<Record<string, string>>({});
   const [proofSrc, setProofSrc] = useState<string | null>(null);
   const [logoSrcs, setLogoSrcs] = useState<Record<string, string>>({});
+  const [presetLogos, setPresetLogos] = useState<
+    Record<string, { image_url: string; label: string }>
+  >({});
 
   useEffect(() => {
     if (!selected) {
       setProofSrc(null);
       setLogoSrcs({});
+      setPresetLogos({});
       return;
     }
     let live = true;
@@ -54,9 +59,15 @@ export default function AdminOrdersPage() {
           }
         }),
       );
+      const presets = await fetchPresetLogos();
+      const presetMap: Record<string, { image_url: string; label: string }> = {};
+      presets.forEach((p) => {
+        presetMap[p.id] = { image_url: p.image_url, label: p.label };
+      });
       if (!live) return;
       setProofSrc(proof);
       setLogoSrcs(logos);
+      setPresetLogos(presetMap);
     })();
     return () => {
       live = false;
@@ -349,19 +360,32 @@ export default function AdminOrdersPage() {
                       {[item.color, item.size].filter(Boolean).join(" — ")}
                       {item.name_tag_text && ` • الاسم: ${item.name_tag_text}`}
                     </p>
-                    {item.customization_type === "uploaded" &&
-                      logoSrcs[item.id] && (
+                    {(() => {
+                      const preset = item.customization_type === "preset"
+                        ? presetLogos[item.customization_logo_url_or_preset_id ?? ""]
+                        : null;
+                      const uploadedSrc = item.customization_type === "uploaded"
+                        ? logoSrcs[item.id]
+                        : null;
+                      const logoSrc = preset?.image_url ?? uploadedSrc;
+                      if (!logoSrc) return null;
+                      return (
                         <div className="mt-1 flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-ink-400">شعار مرفوع:</span>
+                          <span className="text-[10px] font-bold text-ink-400">
+                            {item.customization_type === "preset"
+                              ? `شعار (${preset?.label || "جاهز"}):`
+                              : "شعار مرفوع:"}
+                          </span>
                           <Image
-                            src={logoSrcs[item.id]}
+                            src={logoSrc}
                             alt="شعار"
                             width={32}
                             height={32}
                             className="rounded-md object-contain"
                           />
                         </div>
-                      )}
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
