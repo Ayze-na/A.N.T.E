@@ -36,6 +36,7 @@ export function ProductDetailClient({
   const [multiCustomizations, setMultiCustomizations] = useState<
     Record<string, CustomizationState | null>
   >({});
+  const [rowColors, setRowColors] = useState<Record<string, string>>({});
   const [customization, setCustomization] = useState<CustomizationState | null>(null);
   const [customizeTarget, setCustomizeTarget] = useState<string | null>(null);
 
@@ -61,7 +62,7 @@ export function ProductDetailClient({
           name: product.name,
           image_url: product.image_urls[0] ?? "",
           size: s,
-          color: color ?? "",
+          color: rowColors[s] ?? color ?? "",
           quantity: counts[s],
           unit_price: price,
           customization: multiCustomizations[s] ?? undefined,
@@ -69,6 +70,7 @@ export function ProductDetailClient({
       );
       setCounts({});
       setMultiCustomizations({});
+      setRowColors({});
       toast(
         picks.length === 1
           ? "تمت إضافة المنتج إلى السلة 🛒"
@@ -250,6 +252,19 @@ export function ProductDetailClient({
                         >
                           <div className="flex items-center justify-between gap-3">
                             <span className="text-sm font-black text-ink-700">{s}</span>
+                            {product.colors.length > 1 && (
+                              <select
+                                value={rowColors[s] ?? color ?? product.colors[0] ?? ""}
+                                onChange={(e) =>
+                                  setRowColors((m) => ({ ...m, [s]: e.target.value }))
+                                }
+                                className="h-8 max-w-[100px] rounded-lg border border-ink-200 bg-white px-2 text-[11px] font-bold text-ink-700"
+                              >
+                                {product.colors.map((c) => (
+                                  <option key={c} value={c}>{c}</option>
+                                ))}
+                              </select>
+                            )}
                             <div className="inline-flex items-center rounded-lg border border-ink-200 bg-white">
                               <button
                                 className="h-8 w-8 font-black text-primary-700 disabled:opacity-30"
