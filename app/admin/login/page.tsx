@@ -1,18 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { hasSupabase } from "@/lib/admin";
+import { createClient } from "@/lib/supabase/client";
 
 function LoginForm() {
   const params = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const isLive = hasSupabase();
   const next = params.get("next") || "/admin";
   const linkFailed = params.get("error") === "callback";
@@ -54,6 +58,35 @@ function LoginForm() {
     }
   };
 
+  const verifyByCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = code.trim().replace(/\s/g, "");
+    if (trimmed.length < 6) {
+      setError("أدخل الكود المكوّن من 6 أرقام");
+      return;
+    }
+    setVerifying(true);
+    setError("");
+    try {
+      const supabase = createClient();
+      const { error: otpError } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: trimmed,
+        type: "email",
+      });
+      if (otpError) {
+        setError("الكود غير صحيح أو منتهي الصلاحية");
+        setVerifying(false);
+        return;
+      }
+      router.push(next);
+      router.refresh();
+    } catch {
+      setError("حدث خطأ، حاول مرة أخرى");
+      setVerifying(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-primary-50 to-white px-4">
       <div className="w-full max-w-sm rounded-2xl border border-ink-100 bg-[#F2F1F7] p-8 shadow-lg">
@@ -83,18 +116,42 @@ function LoginForm() {
               ✉️
             </span>
             <p className="mt-3 text-sm font-bold text-ink-800">
-              تم إرسال رابط الدخول
+              تم إرسال رمز الدخول
             </p>
             <p className="mt-1 text-xs leading-5 text-ink-500">
-              اذهب إلى بريدك الإلكتروني واضغط على رابط الدخول المرسل
-              داخل رسالة <b>Supabase Auth</b>.
+              ستجد في البريد <b>رمزاً من 6 أرقام</b> — أدخله هنا للدخول مباشرة.
+              <br />
+              (إن لم يصلك البريد، افحص مجلد الرسائل غير المرغوب فيها)
             </p>
-            <button
-              onClick={() => setSent(false)}
-              className="mt-4 text-xs font-bold text-primary-700 hover:underline"
-            >
-              تعديل البريد
-            </button>
+
+            <form onSubmit={verifyByCode} className="mt-4 space-y-3">
+              <input
+                dir="ltr"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="000000"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="h-14 w-full rounded-xl border border-ink-300 bg-white px-4 text-center text-2xl font-black tracking-[0.5em] text-ink-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+              />
+              {error && <p className="text-xs font-bold text-red-600">{error}</p>}
+              <Button type="submit" className="w-full" loading={verifying}>
+                دخول بالكود
+              </Button>
+            </form>
+
+            <div className="mt-4 flex items-center justify-center">
+              <button
+                onClick={() => {
+                  setSent(false);
+                  setError("");
+                }}
+                className="text-xs font-bold text-primary-700 hover:underline"
+              >
+                تعديل البريد
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4">
@@ -108,11 +165,11 @@ function LoginForm() {
               required
             />
             <p className="text-[11px] leading-5 text-ink-400">
-              سنرسل لك رابط دخول آمن على بريدك — لا حاجة لكلمة مرور.
+              سنرسل لك رمز مكوّناً من 6 أرقام على بريدك — لا حاجة لكلمة مرور.
             </p>
             {error && <p className="text-xs font-bold text-red-600">{error}</p>}
             <Button type="submit" className="w-full" loading={loading}>
-              إرسال رابط الدخول
+              إرسال رمز الدخول
             </Button>
           </form>
         )}
