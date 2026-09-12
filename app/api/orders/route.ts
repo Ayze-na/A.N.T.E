@@ -47,8 +47,12 @@ export async function POST(req: Request) {
 
   const parsed = checkoutSchema.safeParse(payload);
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const detail = issue
+      ? ` [${issue.path.join(".")}] ${issue.message}`
+      : "";
     return NextResponse.json(
-      { ok: false, error: "بيانات غير صالحة، تحقق من الحقول" },
+      { ok: false, error: `بيانات غير صالحة، تحقق من الحقول —${detail}` },
       { status: 400 },
     );
   }

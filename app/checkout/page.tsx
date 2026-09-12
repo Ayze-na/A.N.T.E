@@ -70,7 +70,13 @@ export default function CheckoutPage() {
     // store order details to jump to payment (keeps this step pure client-side)
     sessionStorage.setItem(
       "ante-checkout",
-      JSON.stringify({ ...form, subtotal, deposit }),
+      JSON.stringify({
+        ...form,
+        phone_1: form.phone_1.replace(/[^\d]/g, ""),
+        phone_2: form.phone_2.replace(/[^\d]/g, ""),
+        subtotal,
+        deposit,
+      }),
     );
     setSubmitting(false);
     router.push("/payment");

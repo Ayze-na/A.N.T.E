@@ -4,6 +4,9 @@ import type { ProductType } from "@/lib/database.types";
 
 const EGYPTIAN_PHONE = /^01[0125]\d{8}$/;
 
+const normalizePhone = (value: unknown) =>
+  typeof value === "string" ? value.replace(/[^\d]/g, "") : value;
+
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export const customizationSchema = z
@@ -34,8 +37,17 @@ export const cartItemSchema = z.object({
 
 export const checkoutSchema = z.object({
   customer_name: z.string().min(2).max(80),
-  phone_1: z.string().regex(EGYPTIAN_PHONE, "رقم هاتف غير صالح"),
-  phone_2: z.string().regex(EGYPTIAN_PHONE, "رقم هاتف غير صالح").default(""),
+  phone_1: z.preprocess(
+    normalizePhone,
+    z.string().regex(EGYPTIAN_PHONE, "رقم هاتف غير صالح"),
+  ),
+  phone_2: z.preprocess(
+    normalizePhone,
+    z
+      .string()
+      .regex(EGYPTIAN_PHONE, "رقم هاتف غير صالح")
+      .or(z.literal("")),
+  ),
   address: z.string().min(8).max(500),
   city: z.string().min(2).max(40),
   items: z.array(cartItemSchema).min(1).max(50),

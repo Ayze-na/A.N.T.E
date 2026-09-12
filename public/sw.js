@@ -1,4 +1,4 @@
-const CACHE = "ante-v1";
+const CACHE = "ante-v2";
 const CORE = [
   "/",
   "/manifest.json",
